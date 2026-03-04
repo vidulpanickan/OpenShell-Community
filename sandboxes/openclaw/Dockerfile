@@ -36,6 +36,9 @@ RUN npm install -g openclaw
 
 FROM openclaw AS final
 
+# Copy sandbox policy
+COPY policy.yaml /etc/navigator/policy.yaml
+
 # Copy the OpenClaw startup helper into the image
 COPY openclaw-start.sh /usr/local/bin/openclaw-start
 RUN chmod +x /usr/local/bin/openclaw-start
