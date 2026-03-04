@@ -6,18 +6,18 @@ This repo is the community ecosystem around NemoClaw -- a hub for contributed sk
 
 ## What's Here
 
-| Directory | Description |
-|-----------|-------------|
-| `brev/` | [Brev](https://brev.dev) launchable for one-click cloud deployment of NemoClaw |
+| Directory    | Description                                                                       |
+| ------------ | --------------------------------------------------------------------------------- |
+| `brev/`      | [Brev](https://brev.dev) launchable for one-click cloud deployment of NemoClaw    |
 | `sandboxes/` | Pre-built sandbox images for domain-specific workloads (each with its own skills) |
 
 ### Sandboxes
 
-| Sandbox | Description |
-|-------|-------------|
-| `sandboxes/sdg/` | Synthetic data generation workflows |
-| `sandboxes/openclaw/` | OpenClaw -- open agent manipulation and control |
-| `sandboxes/simulation/` | General-purpose simulation sandboxes |
+| Sandbox                 | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| `sandboxes/sdg/`        | Synthetic data generation workflows             |
+| `sandboxes/openclaw/`   | OpenClaw -- open agent manipulation and control |
+| `sandboxes/simulation/` | General-purpose simulation sandboxes            |
 
 ## Getting Started
 
@@ -29,9 +29,7 @@ This repo is the community ecosystem around NemoClaw -- a hub for contributed sk
 
 ### Quick Start with Brev
 
-The fastest way to get up and running is with the included Brev launchable:
-
-<!-- TODO: Add Brev launchable instructions -->
+TODO: Add Brev instructions
 
 ### Using Sandboxes
 
