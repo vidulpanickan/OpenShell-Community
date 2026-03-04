@@ -23,9 +23,7 @@ The foundational sandbox image that all other NemoClaw Community sandbox images 
 ```
 /sandbox/                  # Home directory (sandbox user)
   .bashrc, .profile        # Shell init
-  .claude/skills/          # Claude agent skill discovery
-  .agents/skills/          # Generic agent skill discovery
-  .openclaw/skills/        # OpenClaw skill discovery
+  .agents/skills/          # Agent skill discovery
 ```
 
 ## Build

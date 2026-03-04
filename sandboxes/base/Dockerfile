@@ -75,7 +75,7 @@ FROM devtools AS final
 RUN mkdir -p /etc/navigator
 
 # Set up sandbox user home directory
-RUN mkdir -p /sandbox/.claude/skills /sandbox/.agents/skills /sandbox/.openclaw/skills && \
+RUN mkdir -p /sandbox/.agents/skills && \
     printf 'export PS1="\\u@\\h:\\w\\$ "\n' > /sandbox/.bashrc && \
     printf '[ -f ~/.bashrc ] && . ~/.bashrc\n' > /sandbox/.profile && \
     chown -R sandbox:sandbox /sandbox
