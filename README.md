@@ -16,7 +16,6 @@ This repo is the community ecosystem around NemoClaw -- a hub for contributed sk
 | Sandbox | Description |
 |-------|-------------|
 | `sandboxes/sdg/` | Synthetic data generation workflows |
-| `sandboxes/cosmos/` | NVIDIA Cosmos world-model simulation environments |
 | `sandboxes/openclaw/` | OpenClaw -- open agent manipulation and control |
 | `sandboxes/simulation/` | General-purpose simulation sandboxes |
 
