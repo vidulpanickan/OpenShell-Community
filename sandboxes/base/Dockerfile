@@ -66,6 +66,13 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 FROM devtools AS final
 
+# Ensure policy directory exists
+RUN mkdir -p /etc/navigator
+
+# Auto-copy policy.yaml from child build contexts if present.
+# The trailing wildcard means the COPY is a no-op when the file doesn't exist.
+ONBUILD COPY policy.yaml* /etc/navigator/
+
 # Set up sandbox user home directory
 RUN mkdir -p /sandbox/.claude/skills /sandbox/.agents/skills /sandbox/.openclaw/skills && \
     printf 'export PS1="\\u@\\h:\\w\\$ "\n' > /sandbox/.bashrc && \
