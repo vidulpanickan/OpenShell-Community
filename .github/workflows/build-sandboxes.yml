@@ -95,7 +95,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.sandbox }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/sandboxes/${{ matrix.sandbox }}
           tags: |
             type=sha,prefix=
             type=ref,event=branch
