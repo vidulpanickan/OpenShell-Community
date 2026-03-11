@@ -38,6 +38,10 @@ mkdir -p "$(dirname "$LAUNCH_LOG")"
 touch "$LAUNCH_LOG"
 exec > >(tee -a "$LAUNCH_LOG") 2>&1
 
+mkdir -p "$(dirname "$LAUNCH_LOG")"
+touch "$LAUNCH_LOG"
+exec > >(tee -a "$LAUNCH_LOG") 2>&1
+
 log() {
   printf '[launch.sh] %s\n' "$*"
 }
