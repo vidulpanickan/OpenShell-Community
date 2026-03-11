@@ -17,6 +17,7 @@ import { injectModelSelector, watchChatCompose } from "./model-selector.ts";
 import { ingestKeysFromUrl, DEFAULT_MODEL, resolveApiKey, isKeyConfigured } from "./model-registry.ts";
 import { waitForClient, waitForReconnect, patchConfig } from "./gateway-bridge.ts";
 import { syncKeysToProviders } from "./api-keys-page.ts";
+import { initRateLimitHandler } from "./rate-limit-handler.ts";
 
 function inject(): boolean {
   const hasButton = injectButton();
@@ -100,6 +101,7 @@ async function enableStreamingForActiveModel(): Promise<void> {
 }
 
 function bootstrap() {
+  initRateLimitHandler();
   showConnectOverlay();
 
   waitForReconnect(30_000)

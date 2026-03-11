@@ -586,8 +586,8 @@ function runSandboxCreate() {
       const cmd = [
         "nemoclaw", "sandbox", "create",
         "--name", "nemoclaw",
-        "--from", "nemoclaw",
-        // "--from", NEMOCLAW_IMAGE,
+        // "--from", "nemoclaw",
+        "--from", NEMOCLAW_IMAGE,
         "--forward", "18789",
       ];
       if (policyPath) cmd.push("--policy", policyPath);

@@ -54,6 +54,8 @@ export const ICON_SEARCH = `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="
 
 export const ICON_WARNING = `<svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
 
+export const ICON_ZAP = `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
+
 export const TARGET_ICONS: Record<string, string> = {
   "dgx-spark": ICON_CHIP,
   "dgx-station": ICON_SERVER,

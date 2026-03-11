@@ -12,7 +12,7 @@
  * and active route configured in the Inference tab).
  */
 
-import { ICON_CHEVRON_DOWN, ICON_LOADER, ICON_CHECK, ICON_CLOSE } from "./icons.ts";
+import { ICON_CHEVRON_DOWN, ICON_LOADER, ICON_CHECK, ICON_CLOSE, ICON_ZAP } from "./icons.ts";
 import {
   DEFAULT_MODEL,
   getModelById,
@@ -25,9 +25,11 @@ import {
   CURATED_MODELS,
   curatedToModelEntry,
   getCuratedByModelId,
+  getModelDeployUrl,
   type ModelEntry,
 } from "./model-registry.ts";
 import { patchConfig, waitForReconnect } from "./gateway-bridge.ts";
+import { setCurrentModelId } from "./rate-limit-handler.ts";
 
 // ---------------------------------------------------------------------------
 // State
@@ -424,6 +426,26 @@ function populateDropdown(dropdown: HTMLElement): void {
   routeLink.textContent = "Configure inference \u2192";
   routeLink.dataset.nemoclawGoto = "nemoclaw-inference-routes";
   dropdown.appendChild(routeLink);
+
+  const deployDivider = document.createElement("div");
+  deployDivider.className = "nemoclaw-model-dropdown__divider";
+  dropdown.appendChild(deployDivider);
+
+  const currentEntry = getModelById(selectedModelId);
+  const currentModelIdForDeploy = currentEntry?.providerConfig.models[0]?.id || CURATED_MODELS[0]?.modelId || "";
+  const deployLink = document.createElement("a");
+  deployLink.className = "nemoclaw-model-dropdown__deploy-link";
+  deployLink.href = getModelDeployUrl(currentModelIdForDeploy);
+  deployLink.target = "_blank";
+  deployLink.rel = "noopener noreferrer";
+  deployLink.innerHTML = [
+    `<span class="nemoclaw-model-dropdown__deploy-icon">${ICON_ZAP}</span>`,
+    `<div class="nemoclaw-model-dropdown__deploy-text">`,
+    `  <span class="nemoclaw-model-dropdown__deploy-title">Dedicated endpoint</span>`,
+    `  <span class="nemoclaw-model-dropdown__deploy-sub">Unlimited, private requests</span>`,
+    `</div>`,
+  ].join("");
+  dropdown.appendChild(deployLink);
 }
 
 function buildOption(model: ModelEntry): HTMLElement {
@@ -433,7 +455,17 @@ function buildOption(model: ModelEntry): HTMLElement {
   option.setAttribute("role", "option");
   option.setAttribute("aria-selected", String(model.id === selectedModelId));
   option.dataset.modelId = model.id;
-  option.textContent = model.name;
+
+  const nameSpan = document.createElement("span");
+  nameSpan.className = "nemoclaw-model-option__name";
+  nameSpan.textContent = model.name;
+  option.appendChild(nameSpan);
+
+  const badge = document.createElement("span");
+  badge.className = "nemoclaw-model-badge nemoclaw-model-badge--free";
+  badge.textContent = "FREE";
+  option.appendChild(badge);
+
   return option;
 }
 
@@ -465,7 +497,7 @@ function buildModelSelector(): HTMLElement {
   poweredBy.href = "https://build.nvidia.com/models";
   poweredBy.target = "_blank";
   poweredBy.rel = "noopener noreferrer";
-  poweredBy.textContent = "Powered by NVIDIA endpoints from build.nvidia.com";
+  poweredBy.textContent = "Free tier \u2014 Powered by build.nvidia.com";
 
   wrapper.appendChild(poweredBy);
   wrapper.appendChild(trigger);
@@ -500,6 +532,7 @@ function buildModelSelector(): HTMLElement {
 
     const previousModelId = selectedModelId;
     selectedModelId = newModelId;
+    syncRateLimitModelId();
 
     updateDropdownSelection(wrapper, newModelId);
     const valueEl = trigger.querySelector(".nemoclaw-model-trigger__value");
@@ -553,6 +586,13 @@ function syncSelectionToActiveRoute(): void {
       selectedModelId = dynamic[0].id;
     }
   }
+  syncRateLimitModelId();
+}
+
+function syncRateLimitModelId(): void {
+  const entry = getModelById(selectedModelId);
+  const mid = entry?.providerConfig.models[0]?.id || CURATED_MODELS[0]?.modelId || "";
+  setCurrentModelId(mid);
 }
 
 // ---------------------------------------------------------------------------

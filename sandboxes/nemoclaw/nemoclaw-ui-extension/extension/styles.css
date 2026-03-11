@@ -2992,6 +2992,55 @@ body.nemoclaw-switching openclaw-app {
   color: #76B900;
 }
 
+.nc-quick-picker__resources {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nc-quick-picker__resource-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted, #71717a);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.nc-quick-picker__resource-link:hover {
+  color: var(--foreground, #fafafa);
+}
+
+.nc-quick-picker__resource-link--deploy:hover {
+  color: #76B900;
+}
+
+.nc-quick-picker__resource-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nc-quick-picker__resource-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nc-quick-picker__resource-sep {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 14px;
+  user-select: none;
+}
+
 .nc-quick-picker__add-form {
   display: flex;
   flex-wrap: wrap;
@@ -3703,4 +3752,364 @@ body.nemoclaw-switching openclaw-app {
 .nemoclaw-model-dropdown__route-link:hover {
   color: #76B900;
   background: rgba(118, 185, 0, 0.06);
+}
+
+/* ===========================================
+   Rate Limit Banner
+   =========================================== */
+
+.nemoclaw-ratelimit-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-md, 8px);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  animation: nemoclaw-slide-down 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.nemoclaw-ratelimit-banner__icon {
+  display: flex;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.nemoclaw-ratelimit-banner__icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nemoclaw-ratelimit-banner__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nemoclaw-ratelimit-banner__text {
+  display: block;
+}
+
+.nemoclaw-ratelimit-banner__budget {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.nemoclaw-ratelimit-banner__budget-inline {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.nemoclaw-ratelimit-banner__dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 120ms ease, background 120ms ease;
+  padding: 0;
+}
+
+.nemoclaw-ratelimit-banner__dismiss:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nemoclaw-ratelimit-banner__dismiss svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- Warning state (approaching limit) --- */
+
+.nemoclaw-ratelimit-banner--warning {
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+}
+
+.nemoclaw-ratelimit-banner--warning .nemoclaw-ratelimit-banner__deploy-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #76B900;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.nemoclaw-ratelimit-banner--warning .nemoclaw-ratelimit-banner__deploy-link:hover {
+  color: #8ad400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nemoclaw-ratelimit-banner--warning .nemoclaw-ratelimit-banner__deploy-link svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- Rate limited state (at limit) --- */
+
+.nemoclaw-ratelimit-banner--limited {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger, #ef4444);
+}
+
+.nemoclaw-ratelimit-banner__countdown-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text, #e4e4e7);
+}
+
+.nemoclaw-ratelimit-banner__countdown-icon {
+  display: flex;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.nemoclaw-ratelimit-banner__countdown-icon svg {
+  width: 14px;
+  height: 14px;
+  animation: nemoclaw-spin 1.5s linear infinite;
+}
+
+.nemoclaw-ratelimit-banner__countdown {
+  font-variant-numeric: tabular-nums;
+}
+
+.nemoclaw-ratelimit-banner__timer {
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 13px;
+}
+
+/* Countdown progress bar */
+
+.nemoclaw-ratelimit-banner__bar {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(239, 68, 68, 0.15);
+  overflow: hidden;
+}
+
+.nemoclaw-ratelimit-banner__bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  background: var(--danger, #ef4444);
+}
+
+/* Deploy CTA button */
+
+.nemoclaw-ratelimit-banner__deploy-cta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-top: 4px;
+  border: 1px solid rgba(118, 185, 0, 0.4);
+  border-radius: var(--radius-md, 8px);
+  background: rgba(118, 185, 0, 0.08);
+  color: #76B900;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+  cursor: pointer;
+}
+
+.nemoclaw-ratelimit-banner__deploy-cta:hover {
+  background: rgba(118, 185, 0, 0.14);
+  border-color: #76B900;
+  box-shadow: 0 0 12px rgba(118, 185, 0, 0.15);
+}
+
+.nemoclaw-ratelimit-banner__deploy-cta svg {
+  width: 18px;
+  height: 18px;
+  stroke: #76B900;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.nemoclaw-ratelimit-banner__deploy-cta strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #76B900;
+}
+
+.nemoclaw-ratelimit-banner__deploy-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted, #71717a);
+  margin-top: 1px;
+}
+
+/* --- Ready state (countdown finished) --- */
+
+.nemoclaw-ratelimit-banner--ready {
+  border: 1px solid rgba(118, 185, 0, 0.3);
+  background: rgba(118, 185, 0, 0.08);
+  color: #76B900;
+}
+
+.nemoclaw-ratelimit-banner__ready {
+  font-weight: 600;
+  color: #76B900;
+}
+
+/* --- Dismiss animation --- */
+
+.nemoclaw-ratelimit-banner--dismiss {
+  animation: nemoclaw-banner-fade-out 300ms ease forwards;
+}
+
+/* ===========================================
+   Model Selector — FREE Badge
+   =========================================== */
+
+.nemoclaw-model-option__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nemoclaw-model-badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  margin-left: 8px;
+}
+
+.nemoclaw-model-badge--free {
+  background: rgba(161, 161, 170, 0.12);
+  color: var(--muted, #a1a1aa);
+  border: 1px solid rgba(161, 161, 170, 0.18);
+}
+
+.nemoclaw-model-option--selected .nemoclaw-model-badge--free {
+  background: rgba(118, 185, 0, 0.1);
+  color: rgba(118, 185, 0, 0.6);
+  border-color: rgba(118, 185, 0, 0.2);
+}
+
+/* ===========================================
+   Model Selector — Deploy Dedicated Link
+   =========================================== */
+
+.nemoclaw-model-dropdown__deploy-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--text, #e4e4e7);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 100ms ease,
+    border-color 100ms ease;
+  box-sizing: border-box;
+}
+
+.nemoclaw-model-dropdown__deploy-link:hover {
+  background: rgba(118, 185, 0, 0.06);
+  border-left-color: #76B900;
+}
+
+.nemoclaw-model-dropdown__deploy-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm, 6px);
+  background: rgba(118, 185, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.nemoclaw-model-dropdown__deploy-icon svg {
+  width: 14px;
+  height: 14px;
+  stroke: #76B900;
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nemoclaw-model-dropdown__deploy-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.nemoclaw-model-dropdown__deploy-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #76B900;
+}
+
+.nemoclaw-model-dropdown__deploy-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted, #71717a);
 }

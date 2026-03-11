@@ -21,11 +21,14 @@ import {
   ICON_CHEVRON_DOWN,
   ICON_EYE,
   ICON_EYE_OFF,
+  ICON_GLOBE,
+  ICON_ZAP,
 } from "./icons.ts";
 import { refreshModelSelector, setActiveModelFromExternal } from "./model-selector.ts";
 import {
   CURATED_MODELS,
   getCuratedByModelId,
+  getModelDeployUrl,
 } from "./model-registry.ts";
 
 // ---------------------------------------------------------------------------
@@ -355,7 +358,40 @@ function buildQuickPicker(): HTMLElement {
   addBtn.addEventListener("click", () => showAddQuickSelectForm(section));
   section.appendChild(addBtn);
 
+  section.appendChild(buildResourceLinks());
+
   return section;
+}
+
+const MODEL_CATALOG_URL = "https://build.nvidia.com/models";
+
+function buildResourceLinks(): HTMLElement {
+  const row = document.createElement("div");
+  row.className = "nc-quick-picker__resources";
+
+  const catalogLink = document.createElement("a");
+  catalogLink.className = "nc-quick-picker__resource-link";
+  catalogLink.href = MODEL_CATALOG_URL;
+  catalogLink.target = "_blank";
+  catalogLink.rel = "noopener noreferrer";
+  catalogLink.innerHTML = `<span class="nc-quick-picker__resource-icon">${ICON_GLOBE}</span> Browse model catalog`;
+  row.appendChild(catalogLink);
+
+  const sep = document.createElement("span");
+  sep.className = "nc-quick-picker__resource-sep";
+  sep.textContent = "\u00b7";
+  row.appendChild(sep);
+
+  const currentModelId = pendingActivation?.modelId ?? activeRoute?.modelId ?? CURATED_MODELS[0]?.modelId ?? "";
+  const deployLink = document.createElement("a");
+  deployLink.className = "nc-quick-picker__resource-link nc-quick-picker__resource-link--deploy";
+  deployLink.href = getModelDeployUrl(currentModelId);
+  deployLink.target = "_blank";
+  deployLink.rel = "noopener noreferrer";
+  deployLink.innerHTML = `<span class="nc-quick-picker__resource-icon">${ICON_ZAP}</span> Deploy dedicated endpoint`;
+  row.appendChild(deployLink);
+
+  return row;
 }
 
 function buildQuickChip(modelId: string, name: string, providerName: string, currentModelId: string, section: HTMLElement, removable: boolean): HTMLElement {

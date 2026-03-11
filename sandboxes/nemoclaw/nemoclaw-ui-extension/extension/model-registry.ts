@@ -346,6 +346,16 @@ export function buildQuickSelectEntry(
 }
 
 // ---------------------------------------------------------------------------
+// Deploy URL — model-specific link to dedicated endpoint provisioning
+// ---------------------------------------------------------------------------
+
+const DEPLOY_BASE_URL = "https://build.nvidia.com";
+
+export function getModelDeployUrl(modelId: string): string {
+  return `${DEPLOY_BASE_URL}/${modelId}/deploy?nim=hosted`;
+}
+
+// ---------------------------------------------------------------------------
 // Deploy targets (used by deploy-modal.ts)
 // ---------------------------------------------------------------------------
 
