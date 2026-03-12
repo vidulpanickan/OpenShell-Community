@@ -210,6 +210,7 @@ json.dump(cfg, open(os.environ['HOME'] + '/.openclaw/openclaw.json', 'w'), inden
 "
 
 nohup openclaw gateway > /tmp/gateway.log 2>&1 &
+echo "[gateway] openclaw gateway launched (pid $!)"
 
 # Copy the default policy to a writable location so that policy-proxy can
 # update it at runtime.  /etc is read-only under Landlock, but /sandbox is
@@ -228,17 +229,38 @@ _POLICY_PATH="${_POLICY_DST}"
 # /api/policy requests to read/write the sandbox policy file.
 NODE_PATH=$(npm root -g) POLICY_PATH=${_POLICY_PATH} UPSTREAM_PORT=${INTERNAL_GATEWAY_PORT} LISTEN_PORT=${PUBLIC_PORT} \
   nohup node /usr/local/lib/policy-proxy.js >> /tmp/gateway.log 2>&1 &
+echo "[gateway] policy-proxy launched (pid $!) upstream=${INTERNAL_GATEWAY_PORT} public=${PUBLIC_PORT}"
 
 # Auto-approve pending device pairing requests so the browser is paired
 # before the user notices the "pairing required" prompt in the Control UI.
 (
+  echo "[auto-pair] watcher starting"
   _pair_deadline=$(($(date +%s) + 300))
+  _pair_attempts=0
+  _pair_approved=0
+  _pair_errors=0
   while [ "$(date +%s)" -lt "$_pair_deadline" ]; do
     sleep 0.5
-    if openclaw devices approve --latest --json 2>/dev/null | grep -q '"ok"'; then
-      echo "[auto-pair] Approved pending device pairing request."
+    _pair_attempts=$((_pair_attempts + 1))
+    _approve_output="$(openclaw devices approve --latest --json 2>&1 || true)"
+
+    if printf '%s\n' "$_approve_output" | grep -q '"ok"[[:space:]]*:[[:space:]]*true'; then
+      _pair_approved=$((_pair_approved + 1))
+      echo "[auto-pair] Approved pending device pairing request: ${_approve_output}"
+      continue
+    fi
+
+    if [ -n "$_approve_output" ] && ! printf '%s\n' "$_approve_output" | grep -qiE 'no pending|no device|not paired|nothing to approve'; then
+      _pair_errors=$((_pair_errors + 1))
+      echo "[auto-pair] approve --latest returned non-success output: ${_approve_output}"
+    fi
+
+    if [ $((_pair_attempts % 20)) -eq 0 ]; then
+      _list_output="$(openclaw devices list --json 2>&1 || true)"
+      echo "[auto-pair] heartbeat attempts=${_pair_attempts} approved=${_pair_approved} errors=${_pair_errors} devices=${_list_output}"
     fi
   done
+  echo "[auto-pair] watcher exiting attempts=${_pair_attempts} approved=${_pair_approved} errors=${_pair_errors}"
 ) >> /tmp/gateway.log 2>&1 &
 
 CONFIG_FILE="${HOME}/.openclaw/openclaw.json"
@@ -246,8 +268,8 @@ token=$(grep -o '"token"\s*:\s*"[^"]*"' "${CONFIG_FILE}" 2>/dev/null | head -1 |
 
 CHAT_UI_BASE="${CHAT_UI_URL%/}"
 if [ -n "${token}" ]; then
-    LOCAL_URL="http://127.0.0.1:18789/?token=${token}"
-    CHAT_URL="${CHAT_UI_BASE}/?token=${token}"
+    LOCAL_URL="http://127.0.0.1:18789/#token=${token}"
+    CHAT_URL="${CHAT_UI_BASE}/#token=${token}"
 else
     LOCAL_URL="http://127.0.0.1:18789/"
     CHAT_URL="${CHAT_UI_BASE}/"
