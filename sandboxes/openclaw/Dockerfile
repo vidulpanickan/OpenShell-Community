@@ -14,8 +14,9 @@ FROM ${BASE_IMAGE}
 
 USER root
 
-# Install OpenClaw CLI
-RUN npm install -g openclaw
+# Install OpenClaw CLI (pinned to fix GHSA-rchv-x836-w7xp, GHSA-6mgf-v5j7-45cr,
+# GHSA-5wcw-8jjv-m286)
+RUN npm install -g openclaw@2026.3.11
 
 # Copy sandbox policy
 COPY policy.yaml /etc/navigator/policy.yaml
