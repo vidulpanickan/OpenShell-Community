@@ -277,7 +277,6 @@ install_cli_from_release() {
 
   arch="$(detect_arch)"
   tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' RETURN
 
   for candidate in openshell nemoclaw; do
     case "$candidate" in
@@ -293,10 +292,12 @@ install_cli_from_release() {
       sudo install -m 755 "$tmpdir/$candidate" "/usr/local/bin/$candidate"
       CLI_BIN="$candidate"
       log "Installed CLI from release: $CLI_BIN"
+      rm -rf "$tmpdir"
       return 0
     fi
   done
 
+  rm -rf "$tmpdir"
   log "Unable to install CLI from GitHub releases."
   exit 1
 }
