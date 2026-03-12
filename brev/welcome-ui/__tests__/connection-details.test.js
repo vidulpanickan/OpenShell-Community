@@ -51,9 +51,9 @@ describe("GET /api/connection-details", () => {
     expect(res.body.gatewayPort).toBe(8080);
     expect(res.body.instructions).toBeDefined();
     expect(res.body.instructions.install).toContain("curl");
-    expect(res.body.instructions.connect).toContain("nemoclaw gateway add");
-    expect(res.body.instructions.createSandbox).toContain("nemoclaw sandbox create");
-    expect(res.body.instructions.tui).toBe("nemoclaw term");
+    expect(res.body.instructions.connect).toContain("openshell gateway add");
+    expect(res.body.instructions.createSandbox).toContain("openshell sandbox create");
+    expect(res.body.instructions.tui).toBe("openshell term");
   });
 
   it("TC-CD02: with Brev ID, gatewayUrl is https://8080-{id}.brevlab.com", async () => {
@@ -99,11 +99,11 @@ describe("GET /api/connection-details", () => {
   it("TC-CD06: instructions contain exact CLI strings", async () => {
     const res = await request(server).get("/api/connection-details");
     expect(res.body.instructions.install).toBe(
-      "curl -fsSL https://github.com/NVIDIA/NemoClaw/releases/download/devel/install.sh | sh"
+      "curl -fsSL https://github.com/NVIDIA/OpenShell/releases/download/devel/install.sh | sh"
     );
     expect(res.body.instructions.createSandbox).toBe(
-      "nemoclaw sandbox create -- claude"
+      "openshell sandbox create -- claude"
     );
-    expect(res.body.instructions.tui).toBe("nemoclaw term");
+    expect(res.body.instructions.tui).toBe("openshell term");
   });
 });

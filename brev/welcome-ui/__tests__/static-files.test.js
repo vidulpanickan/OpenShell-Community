@@ -24,7 +24,7 @@ describe("static file serving", () => {
     const res = await request(server).get("/styles.css");
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("text/css");
-    expect(res.text).toContain("NemoClaw");
+    expect(res.text).toContain("OpenShell");
   });
 
   it("TC-SF02: GET /app.js returns JS with application/javascript content-type", async () => {
@@ -43,7 +43,7 @@ describe("static file serving", () => {
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("text/html");
     expect(res.text).not.toContain("{{OTHER_AGENTS_MODAL}}");
-    expect(res.text).toContain("NemoClaw");
+    expect(res.text).toContain("OpenShell");
   });
 
   it("TC-SF05: GET /index.html returns templated index.html", async () => {

@@ -1,4 +1,4 @@
-# NemoClaw Welcome UI — `server.py` Complete Architecture Reference
+# OpenShell Welcome UI — `server.py` Complete Architecture Reference
 
 > **Purpose:** This document provides an exhaustive, implementation-level description of `server.py` so that a software engineer can faithfully recreate it in Node.js with log-streaming support. Every endpoint, state machine, threading model, edge case, and dependency is documented.
 
@@ -409,7 +409,7 @@ Step 10: Cleanup temp policy file
 
 ### 6.3 `POST /api/inject-key`
 
-**Purpose:** Asynchronously update the NemoClaw provider credential with an API key.
+**Purpose:** Asynchronously update the OpenShell provider credential with an API key.
 
 **Request Body:**
 ```json
@@ -450,7 +450,7 @@ Step 3: If success:
 
 ### 6.4 `POST /api/policy-sync`
 
-**Purpose:** Push a policy YAML to the NemoClaw gateway via the host-side CLI.
+**Purpose:** Push a policy YAML to the OpenShell gateway via the host-side CLI.
 
 **Request Body:** Raw YAML text (Content-Type is not checked, but body is read as UTF-8).
 
@@ -499,10 +499,10 @@ Step 6: Cleanup tempfile (always, even on failure — in finally block)
     "gatewayUrl": "https://8080-xxx.brevlab.com",
     "gatewayPort": 8080,
     "instructions": {
-        "install": "curl -fsSL https://github.com/NVIDIA/NemoClaw/releases/download/devel/install.sh | sh",
-        "connect": "nemoclaw gateway add https://8080-xxx.brevlab.com",
-        "createSandbox": "nemoclaw sandbox create -- claude",
-        "tui": "nemoclaw term"
+        "install": "curl -fsSL https://github.com/NVIDIA/OpenShell/releases/download/devel/install.sh | sh",
+        "connect": "openshell gateway add https://8080-xxx.brevlab.com",
+        "createSandbox": "openshell sandbox create -- claude",
+        "tui": "openshell term"
     }
 }
 ```
@@ -519,7 +519,7 @@ Step 6: Cleanup tempfile (always, even on failure — in finally block)
 
 ### 6.6 `GET /api/providers`
 
-**Purpose:** List all configured NemoClaw providers with their details.
+**Purpose:** List all configured OpenShell providers with their details.
 
 **Processing:**
 ```
@@ -1013,7 +1013,7 @@ Gateway URL:
     Else:       http://{hostname}:8080
 ```
 
-This is a DIFFERENT port (8080) — the NemoClaw gateway itself, not the welcome-ui.
+This is a DIFFERENT port (8080) — the OpenShell gateway itself, not the welcome-ui.
 
 ---
 
@@ -1081,7 +1081,7 @@ Page Load
   │     → keyInjected tracked via sandbox-status polling
   │
   ├── When sandboxReady + keyValid + keyInjected:
-  │     → "Open NemoClaw" button enabled
+  │     → "Open OpenShell" button enabled
   │     → Click opens: sandboxUrl + ?nvapi=<key> in new tab
   │
   └── User clicks "Other Agents" card
@@ -1098,7 +1098,7 @@ Page Load
 | 2 | API key valid + tasks running | "Provisioning Sandbox..." | No (spinner) |
 | 3 | API key empty + tasks done | "Waiting for API key..." | No |
 | 4 | API key valid + sandbox ready + key not injected | "Configuring API key..." | No (spinner) |
-| 5 | API key valid + sandbox ready + key injected | "Open NemoClaw" | Yes |
+| 5 | API key valid + sandbox ready + key injected | "Open OpenShell" | Yes |
 
 ### API Key Validation
 

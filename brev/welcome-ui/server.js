@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// NemoClaw Welcome UI — HTTP server with sandbox lifecycle APIs.
+// OpenShell Welcome UI — HTTP server with sandbox lifecycle APIs.
 // Node.js port of server.py with added SSE log streaming.
 
 "use strict";

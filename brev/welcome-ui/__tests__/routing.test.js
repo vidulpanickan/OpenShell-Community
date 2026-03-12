@@ -99,7 +99,7 @@ describe("routing — priority", () => {
     const res = await request(server).get("/");
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toContain("text/html");
-    expect(res.text).toContain("NemoClaw");
+    expect(res.text).toContain("OpenShell");
   });
 
   it("TC-R13: unknown path returns 404 when sandbox NOT ready", async () => {

@@ -37,7 +37,7 @@ describe("renderOtherAgentsModal", () => {
   it("TC-T07: steps are auto-numbered (1., 2., etc.)", () => {
     const html = renderOtherAgentsModal();
     if (!html) return;
-    expect(html).toContain("1. Install NemoClaw CLI");
+    expect(html).toContain("1. Install OpenShell CLI");
     expect(html).toContain("2. Add the gateway");
     expect(html).toContain("3. Create a sandbox");
     expect(html).toContain("4. Manage policies");
@@ -54,7 +54,7 @@ describe("renderOtherAgentsModal", () => {
     const html = renderOtherAgentsModal();
     if (!html) return;
     expect(html).toContain('<span class="comment"># Claude Code</span>');
-    expect(html).toContain("nemoclaw sandbox create -- claude");
+    expect(html).toContain("openshell sandbox create -- claude");
   });
 
   it("TC-T10: dict command with id renders cmd span with id attribute", () => {
@@ -73,7 +73,7 @@ describe("renderOtherAgentsModal", () => {
   it("TC-T12: copyable + single command + no button ID renders data-copy", () => {
     const html = renderOtherAgentsModal();
     if (!html) return;
-    // "Install NemoClaw CLI" step has copyable:true and one command, no copy_button_id
+    // "Install OpenShell CLI" step has copyable:true and one command, no copy_button_id
     expect(html).toContain("data-copy=");
   });
 
