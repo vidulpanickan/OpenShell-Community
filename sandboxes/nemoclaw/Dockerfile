@@ -62,10 +62,10 @@ RUN set -e; \
 # Fix transitive tar vulnerabilities (GHSA-qffp-2rhf-9h96,
 # GHSA-9ppj-qmqm-q256, GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
 # GHSA-34x7-hfp2-rc4v, GHSA-83g3-92jg-28cx).
-# The base image pins tar@7.5.11 globally, but openclaw and npm ship older
-# nested copies; force-upgrade all of them.
+# The base image pins tar@7.5.11 globally, but openclaw ships older nested
+# copies; force-upgrade them. (npm's own bundled tar is not updatable via
+# --prefix without pulling missing internal deps like @npmcli/docs.)
 RUN npm install -g tar@7.5.11 && \
-    npm --prefix "$(npm root -g)/openclaw" update tar && \
-    npm --prefix "$(npm root -g)/npm" update tar
+    npm --prefix "$(npm root -g)/openclaw" update tar
 
 ENTRYPOINT ["/bin/bash"]
