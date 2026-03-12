@@ -31,6 +31,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         iputils-ping \
         net-tools \
         netcat-openbsd \
+        openssh-sftp-server \
+        procps \
         python3 \
         python3-pip \
         python3-venv \
