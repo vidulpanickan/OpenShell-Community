@@ -121,6 +121,7 @@ RUN mkdir -p /sandbox/.claude/skills && \
     # Sandbox users can `uv pip install` (or `pip install`) into
     # this venv without touching the base image layer.
     uv venv --python 3.13 --seed /sandbox/.venv && \
+    uv pip install --python /sandbox/.venv/bin/python cloudpickle && \
     uv cache clean && \
     chown -R sandbox:sandbox /sandbox/.venv && \
     # Minimal shell init files so interactive and non-interactive shells
