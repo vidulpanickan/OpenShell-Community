@@ -33,6 +33,7 @@ CLI_RETRY_DELAY_SECS="${CLI_RETRY_DELAY_SECS:-3}"
 GHCR_LOGIN="${GHCR_LOGIN:-auto}"
 GHCR_USER="${GHCR_USER:-}"
 NEMOCLAW_IMAGE="${NEMOCLAW_IMAGE:-ghcr.io/nvidia/openshell-community/sandboxes/nemoclaw:latest}"
+SKIP_NEMOCLAW_IMAGE_BUILD="${SKIP_NEMOCLAW_IMAGE_BUILD:-}"
 
 mkdir -p "$(dirname "$LAUNCH_LOG")"
 touch "$LAUNCH_LOG"
@@ -254,6 +255,9 @@ docker_login_ghcr_if_needed() {
 }
 
 should_build_nemoclaw_image() {
+  if [[ "$SKIP_NEMOCLAW_IMAGE_BUILD" == "1" || "$SKIP_NEMOCLAW_IMAGE_BUILD" == "true" || "$SKIP_NEMOCLAW_IMAGE_BUILD" == "yes" ]]; then
+    return 1
+  fi
   [[ -n "$COMMUNITY_REF" && "$COMMUNITY_REF" != "main" ]]
 }
 
@@ -263,7 +267,11 @@ build_nemoclaw_image_if_needed() {
   local dockerfile_path="$image_context/Dockerfile"
 
   if ! should_build_nemoclaw_image; then
-    log "Skipping local NeMoClaw image build (COMMUNITY_REF=${COMMUNITY_REF:-<unset>})."
+    if [[ "$SKIP_NEMOCLAW_IMAGE_BUILD" == "1" || "$SKIP_NEMOCLAW_IMAGE_BUILD" == "true" || "$SKIP_NEMOCLAW_IMAGE_BUILD" == "yes" ]]; then
+      log "Skipping local NeMoClaw image build by override (SKIP_NEMOCLAW_IMAGE_BUILD=${SKIP_NEMOCLAW_IMAGE_BUILD})."
+    else
+      log "Skipping local NeMoClaw image build (COMMUNITY_REF=${COMMUNITY_REF:-<unset>})."
+    fi
     return
   fi
 
