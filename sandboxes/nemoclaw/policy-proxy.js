@@ -15,11 +15,16 @@ const fs = require("fs");
 const os = require("os");
 const net = require("net");
 const crypto = require("crypto");
+const { execFile } = require("child_process");
 
 const POLICY_PATH = process.env.POLICY_PATH || "/etc/openshell/policy.yaml";
 const UPSTREAM_PORT = parseInt(process.env.UPSTREAM_PORT || "18788", 10);
 const LISTEN_PORT = parseInt(process.env.LISTEN_PORT || "18789", 10);
 const UPSTREAM_HOST = "127.0.0.1";
+const AUTO_PAIR_TIMEOUT_MS = parseInt(process.env.AUTO_PAIR_TIMEOUT_MS || "120000", 10);
+const AUTO_PAIR_POLL_MS = parseInt(process.env.AUTO_PAIR_POLL_MS || "300", 10);
+const AUTO_PAIR_HEARTBEAT_MS = parseInt(process.env.AUTO_PAIR_HEARTBEAT_MS || "10000", 10);
+const AUTO_PAIR_QUIET_POLLS = parseInt(process.env.AUTO_PAIR_QUIET_POLLS || "4", 10);
 
 const PROTO_DIR = "/usr/local/lib/nemoclaw-proto";
 
@@ -38,9 +43,234 @@ const WELL_KNOWN_ENDPOINT = "https://navigator.navigator.svc.cluster.local:8080"
 let gatewayEndpoint = "";
 let sandboxName = "";
 
+const pairingBootstrap = {
+  status: "idle",
+  startedAt: 0,
+  updatedAt: Date.now(),
+  approvedCount: 0,
+  errors: 0,
+  attempts: 0,
+  quietPolls: 0,
+  lastApprovalDeviceId: "",
+  lastError: "",
+  sawPending: false,
+  sawPaired: false,
+  active: false,
+  timer: null,
+  heartbeatAt: 0,
+};
+
 function formatRequestLine(req) {
   const host = req.headers.host || "unknown-host";
   return `${req.method || "GET"} ${req.url || "/"} host=${host}`;
+}
+
+function updatePairingState(patch) {
+  Object.assign(pairingBootstrap, patch, { updatedAt: Date.now() });
+}
+
+function pairingSnapshot() {
+  return {
+    status: pairingBootstrap.status,
+    startedAt: pairingBootstrap.startedAt || null,
+    updatedAt: pairingBootstrap.updatedAt,
+    approvedCount: pairingBootstrap.approvedCount,
+    errors: pairingBootstrap.errors,
+    attempts: pairingBootstrap.attempts,
+    quietPolls: pairingBootstrap.quietPolls,
+    lastApprovalDeviceId: pairingBootstrap.lastApprovalDeviceId || "",
+    lastError: pairingBootstrap.lastError || "",
+    sawPending: pairingBootstrap.sawPending,
+    sawPaired: pairingBootstrap.sawPaired,
+    active: pairingBootstrap.active,
+  };
+}
+
+function execOpenClaw(args) {
+  return new Promise((resolve) => {
+    execFile("openclaw", args, { timeout: 5000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      resolve({
+        ok: !error,
+        stdout: stdout || "",
+        stderr: stderr || "",
+        error: error ? error.message : "",
+      });
+    });
+  });
+}
+
+function parseJsonBody(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeDeviceList(raw) {
+  const parsed = parseJsonBody(raw);
+  if (!parsed || typeof parsed !== "object") {
+    return { pending: [], paired: [] };
+  }
+  return {
+    pending: Array.isArray(parsed.pending) ? parsed.pending : [],
+    paired: Array.isArray(parsed.paired) ? parsed.paired : [],
+  };
+}
+
+function approvalSucceeded(raw) {
+  const parsed = parseJsonBody(raw);
+  const device = parsed && typeof parsed === "object" ? parsed.device : null;
+  if (!device || typeof device !== "object") return false;
+  return Boolean(device.approvedAtMs) || (Array.isArray(device.tokens) && device.tokens.length > 0);
+}
+
+function approvalDeviceId(raw) {
+  const parsed = parseJsonBody(raw);
+  const deviceId = parsed && parsed.device && typeof parsed.device.deviceId === "string"
+    ? parsed.device.deviceId
+    : "";
+  return deviceId ? deviceId.slice(0, 12) : "";
+}
+
+function summarizeDevices(devices) {
+  const format = (entries) => {
+    if (!Array.isArray(entries) || entries.length === 0) return "-";
+    return entries
+      .filter((entry) => entry && typeof entry === "object" && entry.deviceId)
+      .map((entry) => `${entry.clientId || "unknown"}:${String(entry.deviceId).slice(0, 12)}`)
+      .join(", ") || "-";
+  };
+  return `pending=${devices.pending.length} [${format(devices.pending)}] paired=${devices.paired.length} [${format(devices.paired)}]`;
+}
+
+function finishPairingBootstrap(status, extra = {}) {
+  if (pairingBootstrap.timer) {
+    clearTimeout(pairingBootstrap.timer);
+  }
+  updatePairingState({
+    status,
+    active: false,
+    timer: null,
+    ...extra,
+  });
+  console.log(
+    `[auto-pair] watcher exiting status=${status} attempts=${pairingBootstrap.attempts} ` +
+    `approved=${pairingBootstrap.approvedCount} errors=${pairingBootstrap.errors} ` +
+    `sawPending=${pairingBootstrap.sawPending} sawPaired=${pairingBootstrap.sawPaired}`
+  );
+}
+
+async function runPairingBootstrapTick() {
+  if (!pairingBootstrap.active) return;
+
+  const now = Date.now();
+  if (pairingBootstrap.startedAt && now - pairingBootstrap.startedAt >= AUTO_PAIR_TIMEOUT_MS) {
+    finishPairingBootstrap("timeout", { lastError: "pairing bootstrap timed out" });
+    return;
+  }
+
+  updatePairingState({ attempts: pairingBootstrap.attempts + 1 });
+
+  const listResult = await execOpenClaw(["devices", "list", "--json"]);
+  const devices = normalizeDeviceList(listResult.stdout);
+  const hasPending = devices.pending.length > 0;
+  const hasPaired = devices.paired.length > 0;
+
+  if (!listResult.ok && !listResult.stdout.trim()) {
+    updatePairingState({
+      errors: pairingBootstrap.errors + 1,
+      status: "error",
+      lastError: listResult.stderr || listResult.error || "device list failed",
+    });
+  } else {
+    updatePairingState({
+      status: hasPending ? "pending" : hasPaired ? "paired" : "armed",
+      sawPending: pairingBootstrap.sawPending || hasPending,
+      sawPaired: pairingBootstrap.sawPaired || hasPaired,
+    });
+  }
+
+  if (!hasPending && hasPaired) {
+    const quietPolls = pairingBootstrap.quietPolls + 1;
+    updatePairingState({ quietPolls });
+    if (quietPolls >= AUTO_PAIR_QUIET_POLLS) {
+      finishPairingBootstrap("approved");
+      return;
+    }
+  } else {
+    updatePairingState({ quietPolls: 0 });
+  }
+
+  if (hasPending) {
+    updatePairingState({ status: "approving" });
+    const approveResult = await execOpenClaw(["devices", "approve", "--latest", "--json"]);
+    if (approvalSucceeded(approveResult.stdout)) {
+      updatePairingState({
+        approvedCount: pairingBootstrap.approvedCount + 1,
+        lastApprovalDeviceId: approvalDeviceId(approveResult.stdout),
+        lastError: "",
+        quietPolls: 0,
+        status: "approved-pending-settle",
+      });
+      console.log(
+        `[auto-pair] approved request attempts=${pairingBootstrap.attempts} ` +
+        `count=${pairingBootstrap.approvedCount} device=${pairingBootstrap.lastApprovalDeviceId || "unknown"}`
+      );
+    } else if ((approveResult.stdout || approveResult.stderr).trim()) {
+      const noisy = !/no pending|no device|not paired|nothing to approve/i.test(
+        `${approveResult.stdout}\n${approveResult.stderr}`
+      );
+      if (noisy) {
+        updatePairingState({
+          errors: pairingBootstrap.errors + 1,
+          lastError: approveResult.stderr || approveResult.stdout || approveResult.error || "approve failed",
+        });
+        console.warn(
+          `[auto-pair] approve --latest unexpected output attempts=${pairingBootstrap.attempts} ` +
+          `errors=${pairingBootstrap.errors}: ${pairingBootstrap.lastError}`
+        );
+      }
+    }
+  }
+
+  if (now - pairingBootstrap.heartbeatAt >= AUTO_PAIR_HEARTBEAT_MS) {
+    updatePairingState({ heartbeatAt: now });
+    console.log(
+      `[auto-pair] heartbeat status=${pairingBootstrap.status} attempts=${pairingBootstrap.attempts} ` +
+      `approved=${pairingBootstrap.approvedCount} errors=${pairingBootstrap.errors} ${summarizeDevices(devices)}`
+    );
+  }
+
+  pairingBootstrap.timer = setTimeout(runPairingBootstrapTick, AUTO_PAIR_POLL_MS);
+}
+
+function startPairingBootstrap(reason) {
+  if (pairingBootstrap.active) {
+    return pairingSnapshot();
+  }
+  if (pairingBootstrap.status === "approved") {
+    return pairingSnapshot();
+  }
+  updatePairingState({
+    status: "armed",
+    startedAt: Date.now(),
+    approvedCount: pairingBootstrap.status === "timeout" || pairingBootstrap.status === "error" ? 0 : pairingBootstrap.approvedCount,
+    errors: 0,
+    attempts: 0,
+    quietPolls: 0,
+    lastApprovalDeviceId: "",
+    lastError: "",
+    sawPending: false,
+    sawPaired: false,
+    active: true,
+    heartbeatAt: 0,
+  });
+  console.log(`[auto-pair] watcher starting reason=${reason} timeout=${AUTO_PAIR_TIMEOUT_MS}ms poll=${AUTO_PAIR_POLL_MS}ms`);
+  runPairingBootstrapTick().catch((error) => {
+    finishPairingBootstrap("error", { lastError: error.message || String(error) });
+  });
+  return pairingSnapshot();
 }
 
 // ---------------------------------------------------------------------------
@@ -569,11 +799,53 @@ function syncAndRespond(yamlBody, res, t0) {
   });
 }
 
+function handlePairingBootstrap(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(pairingSnapshot()));
+    return;
+  }
+
+  if (req.method === "POST") {
+    const snapshot = startPairingBootstrap("api");
+    res.writeHead(202, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(snapshot));
+    return;
+  }
+
+  res.writeHead(405, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ error: "method not allowed" }));
+}
+
+function shouldArmPairingFromRequest(req) {
+  if (!req || !req.url) return false;
+  if (req.method && req.method !== "GET") return false;
+  if (req.url.startsWith("/api/")) return false;
+  if (req.url.startsWith("/assets/")) return false;
+  if (req.url === "/favicon.ico") return false;
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // HTTP server
 // ---------------------------------------------------------------------------
 
 const server = http.createServer((req, res) => {
+  if (req.url === "/api/pairing-bootstrap") {
+    handlePairingBootstrap(req, res);
+    return;
+  }
+
   if (req.url === "/api/policy") {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -593,11 +865,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (shouldArmPairingFromRequest(req)) {
+    startPairingBootstrap(`http:${req.url}`);
+  }
+
   proxyRequest(req, res);
 });
 
 // WebSocket upgrade — pipe raw TCP to upstream
 server.on("upgrade", (req, socket, head) => {
+  startPairingBootstrap(`ws:${req.url || "/"}`);
   console.log(`[policy-proxy] ws in    ${formatRequestLine(req)} -> ${UPSTREAM_HOST}:${UPSTREAM_PORT}`);
   const upstream = net.createConnection({ host: UPSTREAM_HOST, port: UPSTREAM_PORT }, () => {
     const reqLine = `${req.method} ${req.url} HTTP/${req.httpVersion}\r\n`;

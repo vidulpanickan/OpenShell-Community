@@ -14,6 +14,8 @@ interface ConfigSnapshot {
   [key: string]: unknown;
 }
 
+const CONNECTION_POLL_INTERVAL_MS = 200;
+
 /**
  * Returns the live GatewayBrowserClient from the <openclaw-app> element,
  * or null if the app hasn't connected yet.
@@ -26,7 +28,7 @@ export function getClient(): GatewayClient | null {
 }
 
 /**
- * Wait until the gateway client is available (polls every 500ms, up to timeoutMs).
+ * Wait until the gateway client is available, up to timeoutMs.
  */
 export function waitForClient(timeoutMs = 15_000): Promise<GatewayClient> {
   return new Promise((resolve, reject) => {
@@ -46,7 +48,7 @@ export function waitForClient(timeoutMs = 15_000): Promise<GatewayClient> {
         clearInterval(interval);
         reject(new Error("Timed out waiting for OpenClaw gateway client"));
       }
-    }, 500);
+    }, CONNECTION_POLL_INTERVAL_MS);
   });
 }
 
@@ -90,8 +92,7 @@ export function isAppConnected(): boolean {
 /**
  * Wait for the gateway to reconnect after a restart (e.g. after config.patch).
  *
- * Polls <openclaw-app>.connected every 500ms. Resolves when the app is
- * connected again, or rejects after timeoutMs.
+ * Resolves when the app is connected again, or rejects after timeoutMs.
  */
 export function waitForReconnect(timeoutMs = 15_000): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -109,7 +110,7 @@ export function waitForReconnect(timeoutMs = 15_000): Promise<void> {
         clearInterval(interval);
         reject(new Error("Timed out waiting for gateway to reconnect"));
       }
-    }, 500);
+    }, CONNECTION_POLL_INTERVAL_MS);
   });
 }
 
@@ -145,6 +146,6 @@ export function waitForStableConnection(
         clearInterval(interval);
         reject(new Error("Timed out waiting for stable gateway connection"));
       }
-    }, 500);
+    }, CONNECTION_POLL_INTERVAL_MS);
   });
 }

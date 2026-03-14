@@ -143,72 +143,9 @@ NODE_PATH=$(npm root -g) POLICY_PATH=${_POLICY_PATH} UPSTREAM_PORT=${INTERNAL_GA
   nohup node /usr/local/lib/policy-proxy.js >> /tmp/gateway.log 2>&1 &
 echo "[gateway] policy-proxy launched (pid $!) upstream=${INTERNAL_GATEWAY_PORT} public=${PUBLIC_PORT}"
 
-# Auto-approve pending device pairing requests so the browser is paired
-# before the user notices the "pairing required" prompt in the Control UI.
-(
-  echo "[auto-pair] watcher starting"
-  _pair_timeout_secs="${AUTO_PAIR_TIMEOUT_SECS:-0}"
-  _pair_sleep_secs="0.5"
-  _pair_heartbeat_every=120
-  _json_has_approval() {
-    jq -e '
-      .device
-      | objects
-      | (.approvedAtMs? // empty) or ((.tokens? // []) | length > 0)
-    ' >/dev/null 2>&1
-  }
-
-  _summarize_device_list() {
-    jq -r '
-      def labels($entries):
-        ($entries // [])
-        | map(select(type == "object" and (.deviceId? // "") != "")
-          | "\((.clientId // "unknown")):\((.deviceId // "")[0:12])");
-      (labels(.pending)) as $pending
-      | (labels(.paired)) as $paired
-      | "pending=\($pending | length) [\(($pending | if length > 0 then join(", ") else "-" end))] paired=\($paired | length) [\(($paired | if length > 0 then join(", ") else "-" end))]"
-    ' 2>/dev/null || echo "unparseable"
-  }
-
-  if [ "${_pair_timeout_secs}" -gt 0 ] 2>/dev/null; then
-    _pair_deadline=$(($(date +%s) + _pair_timeout_secs))
-    echo "[auto-pair] watcher timeout=${_pair_timeout_secs}s"
-  else
-    _pair_deadline=0
-    echo "[auto-pair] watcher timeout=disabled"
-  fi
-  _pair_attempts=0
-  _pair_approved=0
-  _pair_errors=0
-  while true; do
-    if [ "${_pair_deadline}" -gt 0 ] && [ "$(date +%s)" -ge "${_pair_deadline}" ]; then
-      break
-    fi
-
-    sleep "${_pair_sleep_secs}"
-    _pair_attempts=$((_pair_attempts + 1))
-    _approve_output="$(openclaw devices approve --latest --json 2>&1 || true)"
-
-    if printf '%s\n' "$_approve_output" | _json_has_approval; then
-      _pair_approved=$((_pair_approved + 1))
-      _approved_device_id="$(printf '%s\n' "$_approve_output" | jq -r '.device.deviceId // ""' 2>/dev/null | cut -c1-12)"
-      echo "[auto-pair] approved request attempts=${_pair_attempts} count=${_pair_approved} device=${_approved_device_id:-unknown}"
-      continue
-    fi
-
-    if [ -n "$_approve_output" ] && ! printf '%s\n' "$_approve_output" | grep -qiE 'no pending|no device|not paired|nothing to approve'; then
-      _pair_errors=$((_pair_errors + 1))
-      echo "[auto-pair] approve --latest unexpected output attempts=${_pair_attempts} errors=${_pair_errors}: ${_approve_output}"
-    fi
-
-    if [ $((_pair_attempts % _pair_heartbeat_every)) -eq 0 ]; then
-      _list_output="$(openclaw devices list --json 2>&1 || true)"
-      _device_summary="$(printf '%s\n' "$_list_output" | _summarize_device_list)"
-      echo "[auto-pair] heartbeat attempts=${_pair_attempts} approved=${_pair_approved} errors=${_pair_errors} ${_device_summary}"
-    fi
-  done
-  echo "[auto-pair] watcher exiting attempts=${_pair_attempts} approved=${_pair_approved} errors=${_pair_errors}"
-) >> /tmp/gateway.log 2>&1 &
+# Device pairing bootstrap now runs on-demand inside policy-proxy.js.
+# The first real browser request arms the state machine, which approves a
+# pending device once, exits after convergence, and exposes status to the UI.
 
 CONFIG_FILE="${HOME}/.openclaw/openclaw.json"
 token=$(grep -o '"token"\s*:\s*"[^"]*"' "${CONFIG_FILE}" 2>/dev/null | head -1 | cut -d'"' -f4 || true)
