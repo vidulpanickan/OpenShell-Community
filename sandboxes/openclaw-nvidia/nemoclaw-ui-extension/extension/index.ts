@@ -29,6 +29,7 @@ const PAIRING_REARM_INTERVAL_MS = 4_000;
 const POST_READY_SETTLE_MS = 750;
 const PAIRING_BOOTSTRAPPED_FLAG = "nemoclaw:pairing-bootstrap-complete";
 const PAIRING_RELOAD_FLAG = "nemoclaw:pairing-bootstrap-recovery-reload";
+const READINESS_HANDLED = Symbol("pairing-bootstrap-readiness-handled");
 
 interface PairingBootstrapState {
   status?: string;
@@ -100,6 +101,10 @@ function revealApp(): void {
     overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
     setTimeout(() => overlay.remove(), 600);
   }
+
+  bootstrapActiveRoutePrime().catch((e) =>
+    console.warn("[NeMoClaw] bootstrap active route prime failed:", e),
+  );
 }
 
 function shouldAllowRecoveryReload(): boolean {
@@ -301,7 +306,7 @@ function bootstrap() {
       .catch(async () => {
         console.warn("[NeMoClaw] pairing bootstrap: initial dashboard readiness check timed out; extending wait");
         if (await handlePairingTerminalWithoutStableConnection("initial readiness timed out")) {
-          return;
+          throw READINESS_HANDLED;
         }
         return waitForDashboardReadiness(
           EXTENDED_CONNECTION_TIMEOUT_MS,
@@ -328,7 +333,10 @@ function bootstrap() {
         setConnectOverlayText("Device pairing approved. Opening dashboard...");
         revealApp();
       })
-      .catch(async () => {
+      .catch(async (err) => {
+        if (err === READINESS_HANDLED) return;
+        if (stopped) return;
+        if (dashboardStable) return;
         if (await handlePairingTerminalWithoutStableConnection("extended readiness timed out")) {
           return;
         }
@@ -352,10 +360,6 @@ function bootstrap() {
       console.warn("[NeMoClaw] bootstrap provider key sync failed:", e),
     );
   }
-
-  bootstrapActiveRoutePrime().catch((e) =>
-    console.warn("[NeMoClaw] bootstrap active route prime failed:", e),
-  );
 
   if (inject()) {
     injectModelSelector();

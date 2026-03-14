@@ -6,11 +6,11 @@
 # Sync the UI extension source and launch a NemoClaw sandbox.
 #
 # Usage (from repo root):
-#   bash sandboxes/nemoclaw-launchable-ui/build.sh [extra nemoclaw args...]
+#   bash sandboxes/openclaw-nvidia/build.sh [extra openshell args...]
 #
 # The canonical extension source lives at brev/nemoclaw-ui-extension/extension/.
 # This script copies it into the sandbox directory so the Dockerfile build
-# context can reach it, then delegates to `nemoclaw sandbox create`.
+# context can reach it, then delegates to `openshell sandbox create`.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,4 +21,4 @@ rm -rf "$SCRIPT_DIR/nemoclaw-devx"
 cp -r "$REPO_ROOT/brev/nemoclaw-ui-extension/extension" "$SCRIPT_DIR/nemoclaw-devx"
 
 echo "Creating sandbox..."
-exec nemoclaw sandbox create --from "$SCRIPT_DIR" "$@"
+exec openshell sandbox create --name openclaw-nvidia --from "$SCRIPT_DIR" "$@"

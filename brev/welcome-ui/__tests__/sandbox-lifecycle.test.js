@@ -96,24 +96,24 @@ describe("POST /api/install-openclaw", () => {
 
     expect(spawn).toHaveBeenCalled();
     const [cmd, args] = spawn.mock.calls[0];
-    expect(cmd).toBe("nemoclaw");
+    expect(cmd).toBe("openshell");
     expect(args).toContain("sandbox");
     expect(args).toContain("create");
     expect(args).toContain("--name");
-    expect(args).toContain("nemoclaw");
+    expect(args).toContain("openclaw-nvidia");
     expect(args).toContain("--from");
     expect(args).toContain("--forward");
     expect(args).toContain("18789");
   });
 
-  it("TC-S06: cleanup runs nemoclaw sandbox delete before creation", async () => {
+  it("TC-S06: cleanup runs openshell sandbox delete before creation", async () => {
     await request(server)
       .post("/api/install-openclaw")
       .set("Content-Type", "application/json");
 
     // execFile should have been called with delete command
     const deleteCalls = execFile.mock.calls.filter(
-      (c) => c[0] === "nemoclaw" && c[1][0] === "sandbox" && c[1][1] === "delete"
+      (c) => c[0] === "openshell" && c[1][0] === "sandbox" && c[1][1] === "delete"
     );
     expect(deleteCalls.length).toBeGreaterThanOrEqual(1);
   });

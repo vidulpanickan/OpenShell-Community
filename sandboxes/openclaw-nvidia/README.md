@@ -1,4 +1,4 @@
-# NeMoClaw Sandbox
+# OpenClaw NVIDIA Sandbox
 
 NemoClaw sandbox image that layers the **NeMoClaw DevX UI extension** on top of the [OpenClaw](https://github.com/openclaw) sandbox.
 
@@ -11,14 +11,14 @@ Everything from the `openclaw` sandbox (OpenClaw CLI, gateway, Node.js 22, devel
 - **API Keys Page** — settings page to enter and manage NVIDIA API keys, persisted in browser `localStorage`
 - **NeMoClaw Nav Group** — sidebar navigation with status indicators for key configuration
 - **Contextual Nudges** — inline links in error states that guide users to configure missing API keys
-- **nemoclaw-start** — startup script that injects API keys, onboards, and starts the gateway
+- **openclaw-nvidia-start** — startup script that injects API keys, onboards, and starts the gateway
 
 ## Build
 
 Build from the sandbox directory:
 
 ```bash
-docker build -t nemoclaw sandboxes/nemoclaw/
+docker build -t openclaw-nvidia sandboxes/openclaw-nvidia/
 ```
 
 ## Usage
@@ -26,10 +26,10 @@ docker build -t nemoclaw sandboxes/nemoclaw/
 ### Create a sandbox
 
 ```bash
-nemoclaw sandbox create --from sandboxes/nemoclaw \
+openshell sandbox create --name openclaw-nvidia --from sandboxes/openclaw-nvidia \
   --forward 18789 \
   -- env CHAT_UI_URL=http://127.0.0.1:18789 \
-         nemoclaw-start
+         openclaw-nvidia-start
 ```
 
 The `--from <path>` flag builds the image and imports it into the cluster automatically.
@@ -43,7 +43,7 @@ device-pairing fallback. Examples:
 | Local | `http://127.0.0.1:18789` |
 | Brev | `https://187890-<id>.brevlab.com` |
 
-`nemoclaw-start` then:
+`openclaw-nvidia-start` then:
 
 1. Substitutes `__NVIDIA_*_API_KEY__` placeholders in the bundled JS with runtime environment variables (if provided)
 2. Runs `openclaw onboard` to configure the environment
@@ -57,7 +57,7 @@ Access the UI at `http://127.0.0.1:18789/`.
 API keys can be provided in two ways (in order of precedence):
 
 1. **Browser `localStorage`** — enter keys via the API Keys page in the UI sidebar (persists across page reloads)
-2. **Environment variables** — baked into the JS bundle at container startup by `nemoclaw-start`
+2. **Environment variables** — baked into the JS bundle at container startup by `openclaw-nvidia-start`
 
 | Variable | Description |
 |---|---|
@@ -70,12 +70,12 @@ Keys are optional at sandbox creation time. If omitted, the UI will prompt users
 If you prefer to start OpenClaw manually inside the sandbox:
 
 ```bash
-nemoclaw sandbox connect <sandbox-name>
+openshell sandbox connect <sandbox-name>
 openclaw onboard
 openclaw gateway run
 ```
 
-Note: without running `nemoclaw-start`, the API key placeholders will remain as literals and model endpoints will not work unless keys are entered via the UI.
+Note: without running `openclaw-nvidia-start`, the API key placeholders will remain as literals and model endpoints will not work unless keys are entered via the UI.
 
 ## How the Extension Works
 

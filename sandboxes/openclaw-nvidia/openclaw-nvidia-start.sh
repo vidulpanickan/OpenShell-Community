@@ -20,12 +20,12 @@
 #   NVIDIA_INTEGRATE_API_KEY   — key for integrate.api.nvidia.com
 #
 # Usage (env vars inlined via env command to avoid nemoclaw -e quoting bug):
-#   nemoclaw sandbox create --name nemoclaw --from sandboxes/nemoclaw/ \
+#   openshell sandbox create --name openclaw-nvidia --from sandboxes/openclaw-nvidia/ \
 #     --forward 18789 \
 #     -- env CHAT_UI_URL=http://127.0.0.1:18789 \
 #            NVIDIA_INFERENCE_API_KEY=<key> \
 #            NVIDIA_INTEGRATE_API_KEY=<key> \
-#            nemoclaw-start
+#            openclaw-nvidia-start
 set -euo pipefail
 
 # --------------------------------------------------------------------------

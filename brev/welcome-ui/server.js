@@ -32,9 +32,9 @@ const PORT = parseInt(process.env.PORT || "8081", 10);
 const ROOT = __dirname;
 const REPO_ROOT = process.env.REPO_ROOT || path.join(ROOT, "..", "..");
 const CLI_BIN = process.env.CLI_BIN || "openshell";
-const SANDBOX_DIR = path.join(REPO_ROOT, "sandboxes", "nemoclaw");
-const SANDBOX_NAME = process.env.SANDBOX_NAME || "nemoclaw";
-const SANDBOX_START_CMD = process.env.SANDBOX_START_CMD || "nemoclaw-start";
+const SANDBOX_DIR = path.join(REPO_ROOT, "sandboxes", "openclaw-nvidia");
+const SANDBOX_NAME = process.env.SANDBOX_NAME || "openclaw-nvidia";
+const SANDBOX_START_CMD = process.env.SANDBOX_START_CMD || "openclaw-nvidia-start";
 const SANDBOX_BASE_IMAGE =
   process.env.SANDBOX_BASE_IMAGE ||
   "ghcr.io/nvidia/openshell-community/sandboxes/openclaw:latest";

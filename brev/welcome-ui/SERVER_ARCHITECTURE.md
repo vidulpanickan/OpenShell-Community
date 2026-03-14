@@ -121,12 +121,12 @@ The server operates in **two distinct modes** depending on sandbox readiness:
 |----------|-------|-------------|
 | `ROOT` | `os.path.dirname(os.path.abspath(__file__))` | Directory containing `server.py` |
 | `REPO_ROOT` | env or `ROOT/../../` | Repository root |
-| `SANDBOX_DIR` | `REPO_ROOT/sandboxes/nemoclaw` | Sandbox image source directory |
+| `SANDBOX_DIR` | `REPO_ROOT/sandboxes/openclaw-nvidia` | Sandbox image source directory |
 | `POLICY_FILE` | `SANDBOX_DIR/policy.yaml` | Source policy for gateway creation |
 | `LOG_FILE` | `/tmp/nemoclaw-sandbox-create.log` | Sandbox creation log (written by subprocess) |
 | `PROVIDER_CONFIG_CACHE` | `/tmp/nemoclaw-provider-config-cache.json` | Provider config values cache |
 | `OTHER_AGENTS_YAML` | `ROOT/other-agents.yaml` | YAML modal definition file |
-| `NEMOCLAW_IMAGE` | `ghcr.io/nvidia/openshell-community/sandboxes/nemoclaw:local` | (Currently unused, commented out) |
+| `NEMOCLAW_IMAGE` | `ghcr.io/nvidia/openshell-community/sandboxes/openclaw-nvidia:local` | Optional image override |
 | `SANDBOX_PORT` | `18789` | Port the sandbox listens on (localhost) |
 
 ### Hardcoded Constants
@@ -372,21 +372,21 @@ Global: _inject_key_state (dict, protected by _inject_key_lock)
 ```
 Step 1: Set state to "creating"
 Step 2: _cleanup_existing_sandbox()
-          → runs: nemoclaw sandbox delete nemoclaw
+          → runs: openshell sandbox delete openclaw-nvidia
           → ignores all errors (best-effort cleanup)
 Step 3: Build chat UI URL (no token yet)
 Step 4: _generate_gateway_policy()
-          → Read POLICY_FILE (sandboxes/nemoclaw/policy.yaml)
+          → Read POLICY_FILE (sandboxes/openclaw-nvidia/policy.yaml)
           → Strip "inference" and "process" fields from the YAML
           → Write stripped YAML to a tempfile
           → Return tempfile path (or None if source not found)
 Step 5: Build and run command:
-          nemoclaw sandbox create \
-            --name nemoclaw \
+          openshell sandbox create \
+            --name openclaw-nvidia \
             --from nemoclaw \
             --forward 18789 \
             [--policy <temp_policy_path>] \
-            -- env CHAT_UI_URL=<url> nemoclaw-start
+            -- env CHAT_UI_URL=<url> openclaw-nvidia-start
 Step 6: Stream stdout (merged with stderr) to LOG_FILE and to stderr
           → Uses subprocess.Popen with stdout=PIPE, stderr=STDOUT
           → A daemon thread reads lines and writes to both destinations
@@ -1126,8 +1126,8 @@ All CLI commands are executed via `subprocess.run()` or `subprocess.Popen()`. Ev
 
 | Command | Timeout | Used By |
 |---------|---------|---------|
-| `nemoclaw sandbox create --name ... --from ... --forward ... [--policy ...] -- env ... nemoclaw-start` | None (Popen, waited manually) | `_run_sandbox_create` |
-| `nemoclaw sandbox delete nemoclaw` | 30s | `_cleanup_existing_sandbox` |
+| `openshell sandbox create --name ... --from ... --forward ... [--policy ...] -- env ... openclaw-nvidia-start` | None (Popen, waited manually) | `_run_sandbox_create` |
+| `openshell sandbox delete openclaw-nvidia` | 30s | `_cleanup_existing_sandbox` |
 | `nemoclaw provider list --names` | 30s | `_handle_providers_list` |
 | `nemoclaw provider get <name>` | 30s | `_handle_providers_list` |
 | `nemoclaw provider create --name <n> --type <t> --credential K=V --config K=V` | 30s | `_handle_provider_create` |
@@ -1169,7 +1169,7 @@ All CLI commands are executed via `subprocess.run()` or `subprocess.Popen()`. Ev
 re.search(r"token=([A-Za-z0-9_\-]+)", content)
 ```
 
-The token is found in URLs printed by the `nemoclaw-start.sh` script inside the sandbox.
+The token is found in URLs printed by the `openclaw-nvidia-start.sh` script inside the sandbox.
 
 ### Gateway Readiness Sentinel
 
@@ -1177,7 +1177,7 @@ The token is found in URLs printed by the `nemoclaw-start.sh` script inside the 
 "OpenClaw gateway starting in background" in f.read()
 ```
 
-This exact string is printed by `nemoclaw-start.sh` after the OpenClaw gateway has been backgrounded.
+This exact string is printed by `openclaw-nvidia-start.sh` after the OpenClaw gateway has been backgrounded.
 
 ---
 

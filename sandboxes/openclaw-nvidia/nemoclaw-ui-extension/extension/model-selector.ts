@@ -38,7 +38,7 @@ let modelSelectorObserver: MutationObserver | null = null;
 let applyInFlight = false;
 let currentWrapper: HTMLElement | null = null;
 let activeClusterRoute: ClusterRoute | null = null;
-const ACTIVE_ROUTE_PRIME_PREFIX = "nemoclaw:active-route-primed:";
+let activeRoutePrimedThisPage = false;
 
 // ---------------------------------------------------------------------------
 // Build the config.patch payload for a given model entry
@@ -147,19 +147,12 @@ async function fetchDynamic(): Promise<void> {
 }
 
 function hasPrimedActiveRoute(route: ClusterRoute): boolean {
-  try {
-    return sessionStorage.getItem(`${ACTIVE_ROUTE_PRIME_PREFIX}${route.providerName}:${route.modelId}`) === "1";
-  } catch {
-    return false;
-  }
+  return activeRoutePrimedThisPage;
 }
 
 function markActiveRoutePrimed(route: ClusterRoute): void {
-  try {
-    sessionStorage.setItem(`${ACTIVE_ROUTE_PRIME_PREFIX}${route.providerName}:${route.modelId}`, "1");
-  } catch {
-    // ignore storage failures
-  }
+  void route;
+  activeRoutePrimedThisPage = true;
 }
 
 async function primeActiveRoute(): Promise<void> {
@@ -584,9 +577,6 @@ function buildModelSelector(): HTMLElement {
     if (valueEl) {
       valueEl.textContent = current ? current.name : "No model";
     }
-    void primeActiveRoute().catch((err) => {
-      console.warn("[NeMoClaw] active route prime failed:", err);
-    });
   });
 
   return wrapper;

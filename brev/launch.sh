@@ -32,7 +32,7 @@ CLI_RETRY_COUNT="${CLI_RETRY_COUNT:-5}"
 CLI_RETRY_DELAY_SECS="${CLI_RETRY_DELAY_SECS:-3}"
 GHCR_LOGIN="${GHCR_LOGIN:-auto}"
 GHCR_USER="${GHCR_USER:-}"
-DEFAULT_NEMOCLAW_IMAGE="ghcr.io/nvidia/openshell-community/sandboxes/nemoclaw:latest"
+DEFAULT_NEMOCLAW_IMAGE="ghcr.io/nvidia/openshell-community/sandboxes/openclaw-nvidia:latest"
 if [[ -n "${NEMOCLAW_IMAGE+x}" ]]; then
   NEMOCLAW_IMAGE_EXPLICIT=1
 else
@@ -277,13 +277,13 @@ maybe_use_branch_local_nemoclaw_tag() {
     return
   fi
 
-  NEMOCLAW_IMAGE="ghcr.io/nvidia/openshell-community/sandboxes/nemoclaw:local-dev"
+  NEMOCLAW_IMAGE="ghcr.io/nvidia/openshell-community/sandboxes/openclaw-nvidia:local-dev"
   log "Using non-main branch NeMoClaw image tag: $NEMOCLAW_IMAGE"
 }
 
 build_nemoclaw_image_if_needed() {
   local docker_cmd=()
-  local image_context="$REPO_ROOT/sandboxes/nemoclaw"
+  local image_context="$REPO_ROOT/sandboxes/openclaw-nvidia"
   local dockerfile_path="$image_context/Dockerfile"
 
   if ! should_build_nemoclaw_image; then
@@ -384,7 +384,7 @@ import_nemoclaw_image_into_cluster_if_needed() {
   if ! $docker_bin exec -i "$cluster_name" sh -lc "ctr -n k8s.io images ls | awk '{print \$1}' | grep -Fx '$NEMOCLAW_IMAGE' >/dev/null"; then
     log "Imported image tag not found in cluster containerd: $NEMOCLAW_IMAGE"
     log "Cluster image list:"
-    $docker_bin exec -i "$cluster_name" sh -lc "ctr -n k8s.io images ls | grep 'sandboxes/nemoclaw' || true"
+    $docker_bin exec -i "$cluster_name" sh -lc "ctr -n k8s.io images ls | grep 'sandboxes/openclaw-nvidia' || true"
     exit 1
   fi
 

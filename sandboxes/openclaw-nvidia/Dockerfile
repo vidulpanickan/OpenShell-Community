@@ -8,8 +8,8 @@
 # Builds on the OpenClaw sandbox and adds the NeMoClaw DevX UI extension
 # (model selector, deploy modal, API keys page, nav group).
 #
-# Build:  docker build -t nemoclaw .
-# Run:    nemoclaw sandbox create --from nemoclaw --forward 18789 -- nemoclaw-start
+# Build:  docker build -t openclaw-nvidia .
+# Run:    openshell sandbox create --name openclaw-nvidia --from openclaw-nvidia --forward 18789 -- openclaw-nvidia-start
 
 ARG BASE_IMAGE=ghcr.io/nvidia/openshell-community/sandboxes/openclaw:latest
 FROM ${BASE_IMAGE}
@@ -27,8 +27,8 @@ RUN mkdir -p /etc/navigator
 COPY policy.yaml /etc/navigator/policy.yaml
 
 # Override the startup script with our version (adds runtime API key injection)
-COPY nemoclaw-start.sh /usr/local/bin/nemoclaw-start
-RUN chmod +x /usr/local/bin/nemoclaw-start
+COPY openclaw-nvidia-start.sh /usr/local/bin/openclaw-nvidia-start
+RUN chmod +x /usr/local/bin/openclaw-nvidia-start
 
 # Install the policy reverse proxy (sits in front of the OpenClaw gateway,
 # intercepts /api/policy to read/write the sandbox policy file) and its
