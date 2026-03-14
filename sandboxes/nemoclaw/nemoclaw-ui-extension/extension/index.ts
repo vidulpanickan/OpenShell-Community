@@ -32,6 +32,17 @@ interface PairingBootstrapState {
   lastError?: string;
 }
 
+function isPairingTerminal(state: PairingBootstrapState | null): boolean {
+  if (!state) return false;
+  if (state.active) return false;
+  return state.status === "approved" || state.status === "paired" || state.status === "timeout" || state.status === "error";
+}
+
+function isPairingRecoveryEligible(state: PairingBootstrapState | null): boolean {
+  if (!state) return false;
+  return state.status === "approved" || state.status === "approved-pending-settle" || state.status === "paired";
+}
+
 function inject(): boolean {
   const hasButton = injectButton();
   const hasNav = injectNavGroup();
@@ -140,6 +151,7 @@ function bootstrap() {
 
   let pairingPollTimer = 0;
   let stopped = false;
+  let latestPairingState: PairingBootstrapState | null = null;
 
   const stopPairingPoll = () => {
     stopped = true;
@@ -149,6 +161,7 @@ function bootstrap() {
   const pollPairingState = async () => {
     if (stopped) return null;
     const state = await fetchPairingBootstrapState("GET");
+    latestPairingState = state;
     const text = getOverlayTextForPairingState(state);
     if (text) setConnectOverlayText(text);
     pairingPollTimer = window.setTimeout(pollPairingState, PAIRING_STATUS_POLL_MS);
@@ -162,12 +175,35 @@ function bootstrap() {
     await waitForStableConnection(STABLE_CONNECTION_WINDOW_MS, timeoutMs);
   };
 
+  const handlePairingTerminalWithoutStableConnection = async (reason: string) => {
+    const state = latestPairingState || await fetchPairingBootstrapState("GET");
+    const status = state?.status || "unknown";
+    if (isPairingRecoveryEligible(state) && shouldAllowRecoveryReload()) {
+      console.warn(`[NeMoClaw] pairing bootstrap: ${reason}; pairing=${status}; forcing one recovery reload`);
+      stopPairingPoll();
+      markRecoveryReloadUsed();
+      setConnectOverlayText("Pairing succeeded. Recovering dashboard...");
+      window.setTimeout(() => window.location.reload(), 750);
+      return true;
+    }
+    if (isPairingTerminal(state)) {
+      console.warn(`[NeMoClaw] pairing bootstrap: ${reason}; pairing=${status}; revealing app without further delay`);
+      stopPairingPoll();
+      revealApp();
+      return true;
+    }
+    return false;
+  };
+
   waitForDashboardReadiness(
     INITIAL_CONNECTION_TIMEOUT_MS,
     "Auto-approving device pairing. Hang tight...",
   )
     .catch(async () => {
       console.warn("[NeMoClaw] pairing bootstrap: initial dashboard readiness check timed out; extending wait");
+      if (await handlePairingTerminalWithoutStableConnection("initial readiness timed out")) {
+        return;
+      }
       return waitForDashboardReadiness(
         EXTENDED_CONNECTION_TIMEOUT_MS,
         "Still waiting for device pairing approval...",
@@ -180,16 +216,11 @@ function bootstrap() {
       revealApp();
     })
     .catch(async () => {
-      const state = await fetchPairingBootstrapState("GET");
-      const status = state?.status || "unknown";
-      const recoveryEligible = status === "approved" || status === "approved-pending-settle" || status === "paired";
-      if (recoveryEligible && shouldAllowRecoveryReload()) {
-        console.warn(`[NeMoClaw] pairing bootstrap: readiness timed out after ${status}; forcing one recovery reload`);
-        markRecoveryReloadUsed();
-        setConnectOverlayText("Pairing succeeded. Recovering dashboard...");
-        window.setTimeout(() => window.location.reload(), 750);
+      if (await handlePairingTerminalWithoutStableConnection("extended readiness timed out")) {
         return;
       }
+      const state = latestPairingState || await fetchPairingBootstrapState("GET");
+      const status = state?.status || "unknown";
       console.warn(`[NeMoClaw] pairing bootstrap: readiness timed out; revealing app anyway (status=${status})`);
       stopPairingPoll();
       revealApp();

@@ -330,7 +330,7 @@ Global: _inject_key_state (dict, protected by _inject_key_lock)
 ```json
 {
     "status": "idle" | "creating" | "running" | "error",
-    "url": "https://80810-xxx.brevlab.com/?token=abc123" | null,
+    "url": "https://<public-welcome-ui-host>/#token=abc123" | null,
     "error": "error message" | null,
     "key_injected": true | false,
     "key_inject_error": "error message" | null
@@ -992,15 +992,20 @@ Detection is **idempotent** — once a Brev ID is detected from a Host header, i
 
 ### URL Building
 
-```
-_build_openclaw_url(token):
-    If Brev ID available:
-        → https://80810-{brev_id}.brevlab.com/[?token=xxx]
-    Else:
-        → http://127.0.0.1:{PORT}/[?token=xxx]
-```
+`buildOpenclawUrl(token, req)` is now request-aware and prefers the browser-visible welcome UI origin.
 
-**The URL points to the welcome-ui server itself** (port 8081 = `80810` in Brev URL format), NOT directly to port 18789. This is critical because:
+Resolution order:
+
+1. `CHAT_UI_URL` environment override, if set
+2. `X-Forwarded-Proto` + `X-Forwarded-Host` from the incoming request
+3. Incoming request `Host`
+4. Last detected public welcome UI base URL cached from prior requests
+5. Brev fallback: `https://80810-{brev_id}.brevlab.com/`
+6. Local fallback: `http://127.0.0.1:{PORT}/`
+
+If a token is present, it is appended as a URL fragment: `#token=...`
+
+**The URL points to the welcome-ui server itself**, not directly to port 18789. This is critical because:
 - Brev's port-forwarding creates subdomains per port
 - Cross-origin requests between Brev port subdomains are blocked
 - By proxying through port 8081, the browser stays on one origin

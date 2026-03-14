@@ -45,6 +45,7 @@ const LOG_FILE = "/tmp/nemoclaw-sandbox-create.log";
 const PROVIDER_CONFIG_CACHE = "/tmp/nemoclaw-provider-config-cache.json";
 let _brevEnvId = process.env.BREV_ENV_ID || "";
 let detectedBrevId = "";
+let detectedPublicBaseUrl = "";
 
 const SANDBOX_PORT = 18789;
 
@@ -285,13 +286,53 @@ function maybeDetectBrevId(host) {
   }
 }
 
-function buildOpenclawUrl(token) {
+function firstForwardedValue(headerValue) {
+  return String(headerValue || "")
+    .split(",")[0]
+    .trim();
+}
+
+function normalizeBaseUrl(baseUrl) {
+  if (!baseUrl) return "";
+  try {
+    const parsed = new URL(baseUrl);
+    return `${parsed.protocol}//${parsed.host}/`;
+  } catch {
+    return "";
+  }
+}
+
+function derivePublicBaseUrl(req) {
+  const forwardedProto = firstForwardedValue(req?.headers?.["x-forwarded-proto"]);
+  const forwardedHost = firstForwardedValue(req?.headers?.["x-forwarded-host"]);
+  const host = firstForwardedValue(req?.headers?.host);
+  const proto = forwardedProto || (host && !/^127\.0\.0\.1(?::\d+)?$/.test(host) ? "https" : "http");
+  const authority = forwardedHost || host;
+  if (!authority) return "";
+  return normalizeBaseUrl(`${proto}://${authority}/`);
+}
+
+function rememberPublicBaseUrl(req) {
+  const resolved = derivePublicBaseUrl(req);
+  if (resolved) {
+    detectedPublicBaseUrl = resolved;
+  }
+  return detectedPublicBaseUrl;
+}
+
+function buildOpenclawUrl(token, req = null) {
+  const dynamicBaseUrl =
+    normalizeBaseUrl(process.env.CHAT_UI_URL || "") ||
+    rememberPublicBaseUrl(req) ||
+    normalizeBaseUrl(detectedPublicBaseUrl);
   const brevId = _brevEnvId || detectedBrevId;
-  let url;
-  if (brevId) {
-    url = `https://80810-${brevId}.brevlab.com/`;
-  } else {
-    url = `http://127.0.0.1:${PORT}/`;
+  let url = dynamicBaseUrl;
+  if (!url) {
+    if (brevId) {
+      url = `https://80810-${brevId}.brevlab.com/`;
+    } else {
+      url = `http://127.0.0.1:${PORT}/`;
+    }
   }
   if (token) url += `#token=${token}`;
   return url;
@@ -628,7 +669,11 @@ function runSandboxCreate() {
         return;
       }
 
-      const chatUiUrl = buildOpenclawUrl(null);
+      const chatUiUrl = buildOpenclawUrl(null, {
+        headers: {
+          host: detectedPublicBaseUrl ? new URL(detectedPublicBaseUrl).host : "",
+        },
+      });
       const policyPath = await generateGatewayPolicy();
 
       const cmd = [
@@ -1218,7 +1263,7 @@ async function handleSandboxStatus(req, res) {
     (await portOpen("127.0.0.1", SANDBOX_PORT))
   ) {
     const token = readOpenclawToken();
-    const url = buildOpenclawUrl(token);
+    const url = buildOpenclawUrl(token, req);
     sandboxState.status = "running";
     sandboxState.url = url;
     state.status = "running";
@@ -1497,6 +1542,7 @@ function serveStaticFile(req, res, pathname) {
 
 async function handleRequest(req, res) {
   maybeDetectBrevId(req.headers.host || "");
+  rememberPublicBaseUrl(req);
 
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const pathname = parsedUrl.pathname;
@@ -1584,6 +1630,7 @@ const server = http.createServer((req, res) => {
 // WebSocket upgrade handler — checked BEFORE route matching (mirrors Python)
 server.on("upgrade", async (req, socket, head) => {
   maybeDetectBrevId(req.headers.host || "");
+  rememberPublicBaseUrl(req);
 
   if (await sandboxReady()) {
     proxyWebSocket(req, socket, head);
@@ -1601,6 +1648,7 @@ function _resetForTesting() {
   injectKeyState.error = null;
   injectKeyState.keyHash = null;
   detectedBrevId = "";
+  detectedPublicBaseUrl = "";
   _brevEnvId = "";
   renderedIndex = null;
   _nvidiaApiKey = "";

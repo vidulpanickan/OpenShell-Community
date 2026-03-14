@@ -32,6 +32,13 @@ describe("maybeDetectBrevId + buildOpenclawUrl", () => {
     _resetForTesting();
   });
 
+  function makeReq(host, forwardedProto = null, forwardedHost = null) {
+    const headers = { host };
+    if (forwardedProto) headers["x-forwarded-proto"] = forwardedProto;
+    if (forwardedHost) headers["x-forwarded-host"] = forwardedHost;
+    return { headers };
+  }
+
   it("TC-B05: detection is idempotent (once set, never overwritten)", () => {
     maybeDetectBrevId("80810-first-id.brevlab.com");
     maybeDetectBrevId("80810-second-id.brevlab.com");
@@ -40,35 +47,43 @@ describe("maybeDetectBrevId + buildOpenclawUrl", () => {
     expect(url).not.toContain("second-id");
   });
 
-  it("TC-B06: with Brev ID, URL is https://80810-{id}.brevlab.com/", () => {
+  it("TC-B06: request host takes priority when deriving URL", () => {
+    const req = makeReq("sandbox-preview.example.net", "https");
+    expect(buildOpenclawUrl(null, req)).toBe("https://sandbox-preview.example.net/");
+  });
+
+  it("TC-B07: forwarded host/proto are honored for external URL building", () => {
+    const req = makeReq("127.0.0.1:8081", "https", "80810-myenv.brevlab.com");
+    expect(buildOpenclawUrl("tok123", req)).toBe(
+      "https://80810-myenv.brevlab.com/#token=tok123"
+    );
+  });
+
+  it("TC-B08: with Brev ID fallback, URL uses https://80810-{id}.brevlab.com/", () => {
     maybeDetectBrevId("80810-myenv.brevlab.com");
     expect(buildOpenclawUrl(null)).toBe("https://80810-myenv.brevlab.com/");
   });
 
-  it("TC-B07: with Brev ID + token, URL has ?token=xxx", () => {
+  it("TC-B09: with Brev ID fallback + token, URL appends fragment token", () => {
     maybeDetectBrevId("80810-myenv.brevlab.com");
     expect(buildOpenclawUrl("tok123")).toBe(
-      "https://80810-myenv.brevlab.com/?token=tok123"
+      "https://80810-myenv.brevlab.com/#token=tok123"
     );
   });
 
-  it("TC-B08: without Brev ID, URL is http://127.0.0.1:{PORT}/", () => {
+  it("TC-B10: without request context or Brev ID, URL falls back to local 127.0.0.1", () => {
     const url = buildOpenclawUrl(null);
     expect(url).toBe(`http://127.0.0.1:${PORT}/`);
   });
 
-  it("TC-B09: BREV_ENV_ID env var takes priority over Host detection", () => {
-    // BREV_ENV_ID is read at module load. If it was empty, detected takes over.
-    // We test that detected ID is used when BREV_ENV_ID is not set.
+  it("TC-B11: detected Brev ID still supplies fallback when request context is absent", () => {
     maybeDetectBrevId("80810-detected.brevlab.com");
     const url = buildOpenclawUrl(null);
     expect(url).toContain("detected");
   });
 
-  it("TC-B10: connection details gateway URL uses port 8080 not 8081", () => {
+  it("TC-B12: buildOpenclawUrl still uses welcome-ui port family, not gateway port family", () => {
     maybeDetectBrevId("80810-env123.brevlab.com");
-    // buildOpenclawUrl uses port 80810 (welcome-ui port in Brev)
-    // The gateway URL is separate (tested in connection-details)
     const url = buildOpenclawUrl(null);
     expect(url).toContain("80810");
     expect(url).not.toContain("8080-");

@@ -118,9 +118,11 @@ describe("POST /api/install-openclaw", () => {
     expect(deleteCalls.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("TC-S09: CHAT_UI_URL is passed in the command after -- env", async () => {
+  it("TC-S09: CHAT_UI_URL is derived from the incoming public request URL", async () => {
     await request(server)
       .post("/api/install-openclaw")
+      .set("Host", "preview.example.net")
+      .set("X-Forwarded-Proto", "https")
       .set("Content-Type", "application/json");
 
     if (spawn.mock.calls.length > 0) {
@@ -128,7 +130,7 @@ describe("POST /api/install-openclaw", () => {
       const envIdx = args.indexOf("env");
       expect(envIdx).toBeGreaterThan(-1);
       const chatUrl = args[envIdx + 1];
-      expect(chatUrl).toMatch(/^CHAT_UI_URL=/);
+      expect(chatUrl).toBe("CHAT_UI_URL=https://preview.example.net/");
     }
   });
 });
