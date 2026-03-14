@@ -126,26 +126,45 @@ export function waitForStableConnection(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const start = Date.now();
-    let connectedSince = isAppConnected() ? Date.now() : 0;
+    let healthySince = 0;
+    let cancelled = false;
 
-    const interval = setInterval(() => {
+    const tick = async () => {
+      if (cancelled) return;
       const now = Date.now();
 
-      if (isAppConnected()) {
-        if (!connectedSince) connectedSince = now;
-        if (now - connectedSince >= stableForMs) {
-          clearInterval(interval);
-          resolve();
-          return;
-        }
+      if (!isAppConnected()) {
+        healthySince = 0;
       } else {
-        connectedSince = 0;
+        const client = getClient();
+        if (!client) {
+          healthySince = 0;
+        } else {
+          try {
+            await client.request("status", {});
+            if (!healthySince) healthySince = now;
+            if (now - healthySince >= stableForMs) {
+              cancelled = true;
+              resolve();
+              return;
+            }
+          } catch {
+            healthySince = 0;
+          }
+        }
       }
 
       if (now - start > timeoutMs) {
-        clearInterval(interval);
-        reject(new Error("Timed out waiting for stable gateway connection"));
+        cancelled = true;
+        reject(new Error("Timed out waiting for stable operational gateway connection"));
+        return;
       }
-    }, CONNECTION_POLL_INTERVAL_MS);
+
+      window.setTimeout(() => {
+        void tick();
+      }, CONNECTION_POLL_INTERVAL_MS);
+    };
+
+    void tick();
   });
 }
