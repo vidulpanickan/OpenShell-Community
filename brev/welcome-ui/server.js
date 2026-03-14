@@ -48,6 +48,10 @@ let detectedBrevId = "";
 let detectedPublicBaseUrl = "";
 
 const SANDBOX_PORT = 18789;
+const INFERENCE_BUNDLE_SETTLE_MS = parseInt(
+  process.env.INFERENCE_BUNDLE_SETTLE_MS || "6000",
+  10
+);
 
 const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]/g;
 
@@ -246,6 +250,9 @@ function bootstrapConfigCache() {
   writeConfigCache({
     "nvidia-inference": {
       OPENAI_BASE_URL: "https://inference-api.nvidia.com/v1",
+    },
+    "nvidia-endpoints": {
+      NVIDIA_BASE_URL: "https://integrate.api.nvidia.com/v1",
     },
   });
   logWelcome("Bootstrapped provider config cache");
@@ -826,41 +833,63 @@ function hashKey(key) {
 }
 
 function runInjectKey(key, keyHash) {
-  log("inject-key", `step 1/3: received key (hash=${keyHash.slice(0, 12)}…)`);
+  log("inject-key", `step 1/4: received key (hash=${keyHash.slice(0, 12)}…)`);
 
-  const args = [
-    ...cliArgs("provider", "update", "nvidia-inference"),
-    "--credential", `OPENAI_API_KEY=${key}`,
-    "--config", "OPENAI_BASE_URL=https://inference-api.nvidia.com/v1",
+  const providerUpdates = [
+    {
+      name: "nvidia-inference",
+      credential: `OPENAI_API_KEY=${key}`,
+      config: "OPENAI_BASE_URL=https://inference-api.nvidia.com/v1",
+      cache: { OPENAI_BASE_URL: "https://inference-api.nvidia.com/v1" },
+    },
+    {
+      name: "nvidia-endpoints",
+      credential: `NVIDIA_API_KEY=${key}`,
+      config: "NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1",
+      cache: { NVIDIA_BASE_URL: "https://integrate.api.nvidia.com/v1" },
+    },
   ];
-  log("inject-key", `step 2/3: running ${CLI_BIN} provider update nvidia-inference …`);
 
   const t0 = Date.now();
-  execCmd(args, 120000)
-    .then((result) => {
+  Promise.all(
+    providerUpdates.map(async (update) => {
+      const args = [
+        ...cliArgs("provider", "update", update.name),
+        "--credential", update.credential,
+        "--config", update.config,
+      ];
+      log("inject-key", `step 2/4: running ${CLI_BIN} provider update ${update.name} …`);
+      const result = await execCmd(args, 120000);
       const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
-      log("inject-key", `         CLI exited ${result.code} in ${elapsed}s`);
+      log("inject-key", `         provider=${update.name} CLI exited ${result.code} in ${elapsed}s`);
       if (result.stdout.trim()) log("inject-key", `         stdout: ${result.stdout.trim()}`);
       if (result.stderr.trim()) log("inject-key", `         stderr: ${result.stderr.trim()}`);
 
       if (result.code !== 0) {
         const err = (result.stderr || result.stdout || "unknown error").trim();
-        log("inject-key", `step 3/3: FAILED — ${err}`);
-        injectKeyState.status = "error";
-        injectKeyState.error = err;
-        return;
+        throw new Error(`${update.name}: ${err}`);
       }
 
-      log("inject-key", "step 3/3: SUCCESS — provider nvidia-inference updated");
-      cacheProviderConfig("nvidia-inference", {
-        OPENAI_BASE_URL: "https://inference-api.nvidia.com/v1",
-      });
+      cacheProviderConfig(update.name, update.cache);
+      return update.name;
+    })
+  )
+    .then(async (updatedProviders) => {
+      log("inject-key", `step 3/4: SUCCESS — providers updated: ${updatedProviders.join(", ")}`);
+      if (sandboxState.status === "creating" || sandboxState.status === "running") {
+        log(
+          "inject-key",
+          `step 4/4: waiting ${Math.ceil(INFERENCE_BUNDLE_SETTLE_MS / 1000)}s for sandbox inference bundle refresh`
+        );
+        await sleep(INFERENCE_BUNDLE_SETTLE_MS);
+      }
       injectKeyState.status = "done";
       injectKeyState.error = null;
       injectKeyState.keyHash = keyHash;
+      log("inject-key", "step 4/4: inference providers ready");
     })
     .catch((e) => {
-      log("inject-key", `step 3/3: EXCEPTION — ${e}`);
+      log("inject-key", `step 3/4: FAILED — ${e}`);
       injectKeyState.status = "error";
       injectKeyState.error = String(e);
     });

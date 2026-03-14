@@ -22,6 +22,7 @@ const STABLE_CONNECTION_WINDOW_MS = 1_500;
 const INITIAL_CONNECTION_TIMEOUT_MS = 20_000;
 const EXTENDED_CONNECTION_TIMEOUT_MS = 90_000;
 const PAIRING_STATUS_POLL_MS = 500;
+const PAIRING_REARM_INTERVAL_MS = 4_000;
 const PAIRING_RELOAD_FLAG = "nemoclaw:pairing-bootstrap-recovery-reload";
 
 interface PairingBootstrapState {
@@ -151,7 +152,9 @@ function bootstrap() {
 
   let pairingPollTimer = 0;
   let stopped = false;
+  let dashboardStable = false;
   let latestPairingState: PairingBootstrapState | null = null;
+  let lastPairingStartAt = Date.now();
 
   const stopPairingPoll = () => {
     stopped = true;
@@ -164,6 +167,23 @@ function bootstrap() {
     latestPairingState = state;
     const text = getOverlayTextForPairingState(state);
     if (text) setConnectOverlayText(text);
+
+    if (
+      !stopped &&
+      !dashboardStable &&
+      state &&
+      !state.active &&
+      Date.now() - lastPairingStartAt >= PAIRING_REARM_INTERVAL_MS
+    ) {
+      const rearmed = await fetchPairingBootstrapState("POST");
+      if (rearmed) {
+        latestPairingState = rearmed;
+        lastPairingStartAt = Date.now();
+        const rearmedText = getOverlayTextForPairingState(rearmed);
+        if (rearmedText) setConnectOverlayText(rearmedText);
+      }
+    }
+
     pairingPollTimer = window.setTimeout(pollPairingState, PAIRING_STATUS_POLL_MS);
     return state;
   };
@@ -210,6 +230,7 @@ function bootstrap() {
       );
     })
     .then(() => {
+      dashboardStable = true;
       console.info("[NeMoClaw] pairing bootstrap: reveal app");
       stopPairingPoll();
       setConnectOverlayText("Device pairing approved. Opening dashboard...");

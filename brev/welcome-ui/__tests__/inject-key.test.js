@@ -145,7 +145,7 @@ describe("inject-key background process", () => {
     execFile.mockClear();
   });
 
-  it("TC-K10: calls nemoclaw provider update nvidia-inference with correct args", async () => {
+  it("TC-K10: updates both default inference providers with the submitted key", async () => {
     execFile.mockImplementation((cmd, args, opts, cb) => {
       if (typeof opts === "function") { cb = opts; opts = {}; }
       cb(null, "", "");
@@ -161,13 +161,18 @@ describe("inject-key background process", () => {
     const updateCalls = execFile.mock.calls.filter(
       (c) => c[0] === "nemoclaw" && c[1]?.includes("update")
     );
-    expect(updateCalls.length).toBeGreaterThanOrEqual(1);
-    const args = updateCalls[0][1];
-    expect(args).toContain("nvidia-inference");
-    expect(args).toContain("--type");
-    expect(args).toContain("openai");
-    expect(args.some((a) => a.startsWith("OPENAI_API_KEY="))).toBe(true);
-    expect(args.some((a) => a.includes("inference-api.nvidia.com"))).toBe(true);
+    expect(updateCalls.length).toBeGreaterThanOrEqual(2);
+
+    const inferenceArgs = updateCalls.find((c) => c[1].includes("nvidia-inference"))?.[1] || [];
+    const endpointsArgs = updateCalls.find((c) => c[1].includes("nvidia-endpoints"))?.[1] || [];
+
+    expect(inferenceArgs).toContain("nvidia-inference");
+    expect(inferenceArgs.some((a) => a.startsWith("OPENAI_API_KEY="))).toBe(true);
+    expect(inferenceArgs.some((a) => a.includes("inference-api.nvidia.com"))).toBe(true);
+
+    expect(endpointsArgs).toContain("nvidia-endpoints");
+    expect(endpointsArgs.some((a) => a.startsWith("NVIDIA_API_KEY="))).toBe(true);
+    expect(endpointsArgs.some((a) => a.includes("integrate.api.nvidia.com"))).toBe(true);
   });
 
   it("TC-K11: on CLI success, state becomes done", async () => {
@@ -240,7 +245,7 @@ describe("key hashing", () => {
     expect(hashKey("abc")).toBe(hashKey("abc"));
   });
 
-  it("TC-K16: provider name is hardcoded to nvidia-inference", async () => {
+  it("TC-K16: provider updates cover both nvidia-inference and nvidia-endpoints", async () => {
     execFile.mockImplementation((cmd, args, opts, cb) => {
       if (typeof opts === "function") { cb = opts; opts = {}; }
       cb(null, "", "");
@@ -255,8 +260,7 @@ describe("key hashing", () => {
     const updateCalls = execFile.mock.calls.filter(
       (c) => c[0] === "nemoclaw" && c[1]?.includes("update")
     );
-    if (updateCalls.length > 0) {
-      expect(updateCalls[0][1]).toContain("nvidia-inference");
-    }
+    expect(updateCalls.some((c) => c[1].includes("nvidia-inference"))).toBe(true);
+    expect(updateCalls.some((c) => c[1].includes("nvidia-endpoints"))).toBe(true);
   });
 });

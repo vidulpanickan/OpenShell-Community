@@ -147,7 +147,9 @@ main()
   │
   ├── 1. _bootstrap_config_cache()
   │       If /tmp/nemoclaw-provider-config-cache.json does NOT exist:
-  │         Write default: {"nvidia-inference": {"OPENAI_BASE_URL": "https://inference-api.nvidia.com/v1"}}
+  │         Write defaults for:
+  │           - nvidia-inference → OPENAI_BASE_URL=https://inference-api.nvidia.com/v1
+  │           - nvidia-endpoints → NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
   │       If it already exists: skip (no-op)
   │
   ├── 2. Create ThreadingHTTPServer on ("", PORT)

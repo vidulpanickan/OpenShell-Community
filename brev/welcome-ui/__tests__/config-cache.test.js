@@ -29,12 +29,15 @@ describe("config cache", () => {
     expect(cache).toEqual({ custom: { x: 1 } });
   });
 
-  it("TC-CC03: default bootstrap content has nvidia-inference with OPENAI_BASE_URL", () => {
+  it("TC-CC03: default bootstrap content seeds both NVIDIA inference providers", () => {
     bootstrapConfigCache();
     const cache = readCacheFile();
     expect(cache).toEqual({
       "nvidia-inference": {
         OPENAI_BASE_URL: "https://inference-api.nvidia.com/v1",
+      },
+      "nvidia-endpoints": {
+        NVIDIA_BASE_URL: "https://integrate.api.nvidia.com/v1",
       },
     });
   });
