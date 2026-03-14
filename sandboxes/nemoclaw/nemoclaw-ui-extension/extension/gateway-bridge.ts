@@ -15,6 +15,7 @@ interface ConfigSnapshot {
 }
 
 const CONNECTION_POLL_INTERVAL_MS = 200;
+const BLOCKING_GATEWAY_MESSAGE_RE = /(pairing required|origin not allowed)/i;
 
 /**
  * Returns the live GatewayBrowserClient from the <openclaw-app> element,
@@ -89,6 +90,33 @@ export function isAppConnected(): boolean {
   return app?.connected === true;
 }
 
+function collectVisibleText(root: ParentNode | ShadowRoot | null): string {
+  if (!root) return "";
+  const chunks: string[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+
+  let node: Node | null = walker.currentNode;
+  while (node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent?.trim();
+      if (text) chunks.push(text);
+    } else if (node instanceof Element && node.shadowRoot) {
+      const shadowText = collectVisibleText(node.shadowRoot);
+      if (shadowText) chunks.push(shadowText);
+    }
+    node = walker.nextNode();
+  }
+
+  return chunks.join(" ");
+}
+
+export function hasBlockingGatewayMessage(): boolean {
+  const app = document.querySelector("openclaw-app") as (HTMLElement & { shadowRoot?: ShadowRoot | null }) | null;
+  if (!app) return false;
+  const text = `${collectVisibleText(app)} ${collectVisibleText(app.shadowRoot ?? null)}`;
+  return BLOCKING_GATEWAY_MESSAGE_RE.test(text);
+}
+
 /**
  * Wait for the gateway to reconnect after a restart (e.g. after config.patch).
  *
@@ -133,7 +161,7 @@ export function waitForStableConnection(
       if (cancelled) return;
       const now = Date.now();
 
-      if (!isAppConnected()) {
+      if (!isAppConnected() || hasBlockingGatewayMessage()) {
         healthySince = 0;
       } else {
         const client = getClient();
