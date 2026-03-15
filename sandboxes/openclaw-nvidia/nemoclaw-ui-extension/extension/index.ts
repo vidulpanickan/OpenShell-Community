@@ -40,6 +40,18 @@ interface PairingBootstrapState {
   sawBrowserPaired?: boolean;
 }
 
+const PAIRING_STATUS_PRIORITY: Record<string, number> = {
+  idle: 0,
+  armed: 1,
+  pending: 2,
+  approving: 3,
+  "approved-pending-settle": 4,
+  "paired-other-device": 5,
+  paired: 6,
+  timeout: 7,
+  error: 7,
+};
+
 function isPairingTerminal(state: PairingBootstrapState | null): boolean {
   if (!state) return false;
   if (state.active) return false;
@@ -181,6 +193,7 @@ function bootstrap() {
   let latestPairingState: PairingBootstrapState | null = null;
   let lastPairingStartAt = 0;
   let overlayVisible = false;
+  let overlayPriority = -1;
 
   const stopPairingPoll = () => {
     stopped = true;
@@ -192,6 +205,14 @@ function bootstrap() {
     if (overlayVisible) return;
     overlayVisible = true;
     showConnectOverlay();
+  };
+
+  const setMonotonicOverlayText = (text: string | null, status?: string) => {
+    if (!text) return;
+    const nextPriority = PAIRING_STATUS_PRIORITY[status || ""] ?? overlayPriority;
+    if (nextPriority < overlayPriority) return;
+    overlayPriority = nextPriority;
+    setConnectOverlayText(text);
   };
 
   const scheduleOverlay = () => {
@@ -207,7 +228,7 @@ function bootstrap() {
     const state = await fetchPairingBootstrapState("GET");
     latestPairingState = state;
     const text = getOverlayTextForPairingState(state);
-    if (text) setConnectOverlayText(text);
+    setMonotonicOverlayText(text, state?.status);
 
     if (
       !stopped &&
@@ -222,7 +243,7 @@ function bootstrap() {
         latestPairingState = rearmed;
         lastPairingStartAt = Date.now();
         const rearmedText = getOverlayTextForPairingState(rearmed);
-        if (rearmedText) setConnectOverlayText(rearmedText);
+        setMonotonicOverlayText(rearmedText, rearmed.status);
       }
     }
 
@@ -253,7 +274,7 @@ function bootstrap() {
     const initialText = getOverlayTextForPairingState(initialState);
     if (initialText) {
       ensureOverlayVisible();
-      setConnectOverlayText(initialText);
+      setMonotonicOverlayText(initialText, initialState?.status);
     }
 
     if (!initialState || (!initialState.active && !isPairingTerminal(initialState))) {
@@ -263,7 +284,7 @@ function bootstrap() {
         latestPairingState = started;
         lastPairingStartAt = Date.now();
         const startedText = getOverlayTextForPairingState(started);
-        if (startedText) setConnectOverlayText(startedText);
+        setMonotonicOverlayText(startedText, started.status);
       }
     }
 
@@ -297,7 +318,7 @@ function bootstrap() {
     return false;
   };
 
-  const runReadinessFlow = () => {
+  function runReadinessFlow() {
     waitForDashboardReadiness(
       INITIAL_CONNECTION_TIMEOUT_MS,
       "Auto-approving device pairing. Hang tight...",
@@ -345,7 +366,7 @@ function bootstrap() {
         stopPairingPoll();
         revealApp();
       });
-  };
+  }
 
   const keysIngested = ingestKeysFromUrl();
 
