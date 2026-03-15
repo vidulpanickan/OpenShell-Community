@@ -7,6 +7,7 @@
  */
 
 import * as yaml from "js-yaml";
+import { isPreviewMode, PREVIEW_POLICY_YAML } from "./preview-mode.ts";
 import {
   ICON_LOCK,
   ICON_GLOBE,
@@ -150,6 +151,7 @@ let saveBarEl: HTMLElement | null = null;
 // ---------------------------------------------------------------------------
 
 async function fetchPolicy(): Promise<string> {
+  if (isPreviewMode()) return PREVIEW_POLICY_YAML;
   const res = await fetch("/api/policy");
   if (!res.ok) throw new Error(`Failed to load policy: ${res.status}`);
   return res.text();
@@ -164,6 +166,7 @@ interface SavePolicyResult {
 }
 
 async function savePolicy(yamlText: string): Promise<SavePolicyResult> {
+  if (isPreviewMode()) return { ok: true, applied: true };
   console.log("[policy-save] step 1/2: POST /api/policy →", yamlText.length, "bytes");
   const res = await fetch("/api/policy", {
     method: "POST",
@@ -179,6 +182,7 @@ async function savePolicy(yamlText: string): Promise<SavePolicyResult> {
 }
 
 async function syncPolicyViaHost(yamlText: string): Promise<SavePolicyResult> {
+  if (isPreviewMode()) return { ok: true, applied: true };
   console.log("[policy-save] step 2/2: POST /api/policy-sync →", yamlText.length, "bytes");
   const res = await fetch("/api/policy-sync", {
     method: "POST",
@@ -200,6 +204,7 @@ async function syncPolicyViaHost(yamlText: string): Promise<SavePolicyResult> {
 const DENIALS_SINCE_MS = 5 * 60 * 1000; // 5 minutes
 
 async function fetchDenials(): Promise<DenialEvent[]> {
+  if (isPreviewMode()) return [];
   const since = Date.now() - DENIALS_SINCE_MS;
   const res = await fetch(`/api/sandbox-denials?since=${since}`);
   if (!res.ok) return [];

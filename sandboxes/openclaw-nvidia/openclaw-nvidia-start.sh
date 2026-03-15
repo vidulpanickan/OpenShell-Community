@@ -16,7 +16,6 @@
 #                                 https://187890-<id>.brevlab.com for Brev)
 #
 # Optional env vars (for NVIDIA model endpoints):
-#   NVIDIA_INFERENCE_API_KEY   — key for inference-api.nvidia.com
 #   NVIDIA_INTEGRATE_API_KEY   — key for integrate.api.nvidia.com
 #
 # Usage (env vars inlined via env command to avoid nemoclaw -e quoting bug):

@@ -13,7 +13,7 @@ import {
   ICON_CHIP,
   TARGET_ICONS,
 } from "./icons.ts";
-import { DEPLOY_TARGETS, getApiKey, isKeyConfigured, type DeployTarget } from "./model-registry.ts";
+import { DEPLOY_TARGETS, getApiKey, getUpgradeIntegrationsUrl, isKeyConfigured, type DeployTarget } from "./model-registry.ts";
 
 // ---------------------------------------------------------------------------
 // State
@@ -82,6 +82,7 @@ function buildModal(): HTMLElement {
           Choose a deployment target to provision your OpenClaw agent on NVIDIA DGX hardware.
         </p>
         <div class="nemoclaw-target-list">${targetsHtml}</div>
+        <p class="nemoclaw-modal__partner-cta">Need more throughput? <a class="nemoclaw-modal__partner-link" href="https://build.nvidia.com/openshell/integrations" target="_blank" rel="noopener noreferrer">Use a partner</a> and add them in Inference.</p>
         <div class="nemoclaw-modal__status" style="display:none"></div>
       </div>
     </div>`;
@@ -108,6 +109,16 @@ function buildModal(): HTMLElement {
   overlay.addEventListener("keydown", (e) => {
     if ((e as KeyboardEvent).key === "Escape") closeModal();
   });
+
+  // Set partner link to include current model so landing page can preselect it
+  fetch("/api/cluster-inference")
+    .then((res) => (res.ok ? res.json() : null))
+    .then((body) => {
+      const modelId = body?.ok && body?.modelId ? body.modelId : "";
+      const link = overlay.querySelector<HTMLAnchorElement>(".nemoclaw-modal__partner-link");
+      if (link) link.href = getUpgradeIntegrationsUrl(modelId);
+    })
+    .catch(() => {});
 
   return overlay;
 }
@@ -154,7 +165,7 @@ function disableTargets(overlay: HTMLElement, disabled: boolean) {
 async function handleDeploy(target: DeployTarget, overlay: HTMLElement) {
   const apiKey = getApiKey(target);
   if (!isKeyConfigured(apiKey)) {
-    setStatus(overlay, "error", `API key not configured. <a href="#" data-nemoclaw-goto="nemoclaw-api-keys">Add your keys</a> to get started.`);
+    setStatus(overlay, "error", `API key not configured. <a href="#" data-nemoclaw-goto="nemoclaw-inference-routes">Add your keys</a> in Inference to get started.`);
     return;
   }
 

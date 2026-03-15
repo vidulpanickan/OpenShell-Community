@@ -33,7 +33,7 @@ describe("parseProviderDetail", () => {
     const result = parseProviderDetail(FIXTURES.providerGetOutput);
     expect(result).toEqual({
       id: "abc-123",
-      name: "nvidia-inference",
+      name: "nvidia-endpoints",
       type: "openai",
       credentialKeys: ["OPENAI_API_KEY"],
       configKeys: ["OPENAI_BASE_URL"],
@@ -63,7 +63,7 @@ describe("parseProviderDetail", () => {
   it("TC-CL09: ANSI codes in output are stripped before parsing", () => {
     const result = parseProviderDetail(FIXTURES.providerGetAnsi);
     expect(result).not.toBeNull();
-    expect(result.name).toBe("nvidia-inference");
+    expect(result.name).toBe("nvidia-endpoints");
     expect(result.type).toBe("openai");
   });
 });
@@ -72,7 +72,7 @@ describe("parseClusterInference", () => {
   it("TC-CL10: parses Provider, Model, Version lines", () => {
     const result = parseClusterInference(FIXTURES.clusterInferenceOutput);
     expect(result).toEqual({
-      providerName: "nvidia-inference",
+      providerName: "nvidia-endpoints",
       modelId: "meta/llama-3.1-70b-instruct",
       version: 2,
     });

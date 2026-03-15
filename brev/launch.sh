@@ -568,12 +568,12 @@
   set_inference_route() {
     log "Configuring inference route..."
 
-    if "$CLI_BIN" inference set --provider nvidia-endpoints --model qwen/qwen3.5-397b-a17b >/dev/null 2>&1; then
+    if "$CLI_BIN" inference set --provider nvidia-endpoints --model minimaxai/minimax-m2.5 >/dev/null 2>&1; then
       log "Configured inference via '$CLI_BIN inference set'."
       return
     fi
 
-    if "$CLI_BIN" cluster inference set --provider nvidia-endpoints --model qwen/qwen3.5-397b-a17b >/dev/null 2>&1; then
+    if "$CLI_BIN" cluster inference set --provider nvidia-endpoints --model minimaxai/minimax-m2.5 >/dev/null 2>&1; then
       log "Configured inference via legacy '$CLI_BIN cluster inference set'."
       return
     fi
@@ -706,12 +706,6 @@
     import_nemoclaw_image_into_cluster_if_needed
 
     step "Configuring providers"
-    run_provider_create_or_replace \
-      nvidia-inference \
-      --type openai \
-      --credential OPENAI_API_KEY=unused \
-      --config OPENAI_BASE_URL=https://inference-api.nvidia.com/v1
-
     run_provider_create_or_replace \
       nvidia-endpoints \
       --type nvidia \

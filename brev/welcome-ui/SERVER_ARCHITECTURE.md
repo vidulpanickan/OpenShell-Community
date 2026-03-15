@@ -148,7 +148,6 @@ main()
   ├── 1. _bootstrap_config_cache()
   │       If /tmp/nemoclaw-provider-config-cache.json does NOT exist:
   │         Write defaults for:
-  │           - nvidia-inference → OPENAI_BASE_URL=https://inference-api.nvidia.com/v1
   │           - nvidia-endpoints → NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
   │       If it already exists: skip (no-op)
   │
@@ -436,13 +435,12 @@ Step 10: Cleanup temp policy file
 ```
 Step 1: Log receipt (hash prefix)
 Step 2: Run CLI command:
-          nemoclaw provider update nvidia-inference \
-            --type openai \
-            --credential OPENAI_API_KEY=<key> \
-            --config OPENAI_BASE_URL=https://inference-api.nvidia.com/v1
+          nemoclaw provider update nvidia-endpoints \
+            --credential NVIDIA_API_KEY=<key> \
+            --config NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
         Timeout: 120s
 Step 3: If success:
-          - Cache config {"OPENAI_BASE_URL": "https://inference-api.nvidia.com/v1"} under name "nvidia-inference"
+          - Cache config under name "nvidia-endpoints"
           - State → "done"
         If failure:
           - State → "error" with stderr/stdout message
@@ -537,10 +535,10 @@ Step 3: Merge with config cache values
 The CLI outputs text like:
 ```
 Id:              abc-123
-Name:            nvidia-inference
-Type:            openai
-Credential keys: OPENAI_API_KEY
-Config keys:     OPENAI_BASE_URL
+Name:            nvidia-endpoints
+Type:            nvidia
+Credential keys: NVIDIA_API_KEY
+Config keys:     NVIDIA_BASE_URL
 ```
 
 Parsing rules:
@@ -560,11 +558,11 @@ After parsing, if the provider name has an entry in the config cache, a `configV
     "providers": [
         {
             "id": "abc-123",
-            "name": "nvidia-inference",
-            "type": "openai",
-            "credentialKeys": ["OPENAI_API_KEY"],
-            "configKeys": ["OPENAI_BASE_URL"],
-            "configValues": {"OPENAI_BASE_URL": "https://inference-api.nvidia.com/v1"}
+            "name": "nvidia-endpoints",
+            "type": "nvidia",
+            "credentialKeys": ["NVIDIA_API_KEY"],
+            "configKeys": ["NVIDIA_BASE_URL"],
+            "configValues": {"NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1"}
         }
     ]
 }
@@ -671,7 +669,7 @@ nemoclaw cluster inference get
 
 **Output Parsing (`_parse_cluster_inference`):**
 ```
-Provider:  nvidia-inference
+Provider:  nvidia-endpoints
 Model:     meta/llama-3.1-70b-instruct
 Version:   2
 ```
@@ -688,7 +686,7 @@ Version:   2
 ```json
 {
     "ok": true,
-    "providerName": "nvidia-inference",
+    "providerName": "nvidia-endpoints",
     "modelId": "meta/llama-3.1-70b-instruct",
     "version": 2
 }
@@ -703,7 +701,7 @@ Version:   2
 **Request Body:**
 ```json
 {
-    "providerName": "nvidia-inference",
+    "providerName": "nvidia-endpoints",
     "modelId": "meta/llama-3.1-70b-instruct"
 }
 ```
@@ -721,7 +719,7 @@ nemoclaw cluster inference set --provider <name> --model <model>
 ```json
 {
     "ok": true,
-    "providerName": "nvidia-inference",
+    "providerName": "nvidia-endpoints",
     "modelId": "meta/llama-3.1-70b-instruct",
     "version": 3
 }
@@ -925,7 +923,7 @@ The `nemoclaw provider get` CLI only returns config **key names**, not their val
 - Read on every `GET /api/providers` request
 - Written on every `POST` (create) and `PUT` (update) that includes config values
 - Cleaned up on `DELETE`
-- Bootstrapped at server startup with a default for `nvidia-inference`
+- Bootstrapped at server startup with a default for `nvidia-endpoints`
 
 ---
 
@@ -948,8 +946,8 @@ Output is parsed the same way as provider detail (line-by-line, prefix matching,
 **Format:**
 ```json
 {
-    "nvidia-inference": {
-        "OPENAI_BASE_URL": "https://inference-api.nvidia.com/v1"
+    "nvidia-endpoints": {
+        "NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1"
     },
     "my-custom-provider": {
         "CUSTOM_URL": "https://example.com"
@@ -1237,7 +1235,7 @@ This means it uses a local sandbox name rather than a container image reference.
 
 ### 18.10 Inject Key Hardcodes Provider Name
 
-The `_run_inject_key` function hardcodes `nvidia-inference` as the provider name. This is not configurable via the API.
+The `_run_inject_key` function hardcodes `nvidia-endpoints` as the provider name. This is not configurable via the API.
 
 ### 18.11 Error State Truncation
 

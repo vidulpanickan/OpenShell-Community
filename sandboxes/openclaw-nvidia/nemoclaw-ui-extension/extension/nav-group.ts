@@ -1,12 +1,11 @@
 /**
  * NeMoClaw DevX — Sidebar Nav Group
  *
- * Collapsible "NeMoClaw" nav group with Policy, Inference Routes, and
- * API Keys pages. Renders page overlays on top of <main.content>.
+ * Collapsible "NeMoClaw" nav group with Policy and Inference Routes.
+ * Renders page overlays on top of <main.content>.
  */
 
-import { ICON_SHIELD, ICON_ROUTE, ICON_KEY } from "./icons.ts";
-import { renderApiKeysPage, areAllKeysConfigured, updateStatusDots } from "./api-keys-page.ts";
+import { ICON_SHIELD, ICON_ROUTE } from "./icons.ts";
 import { renderPolicyPage } from "./policy-page.ts";
 import { renderInferencePage } from "./inference-page.ts";
 
@@ -22,7 +21,6 @@ interface NemoClawPage {
   subtitle: string;
   emptyMessage: string;
   customRender?: (container: HTMLElement) => void;
-  showStatusDot?: boolean;
 }
 
 const NEMOCLAW_PAGES: NemoClawPage[] = [
@@ -37,22 +35,12 @@ const NEMOCLAW_PAGES: NemoClawPage[] = [
   },
   {
     id: "nemoclaw-inference-routes",
-    label: "Inference Routes",
+    label: "Inference",
     icon: ICON_ROUTE,
-    title: "Inference Routes",
-    subtitle: "Configure model routing and endpoint mappings",
+    title: "Inference",
+    subtitle: "Configure model routing and API keys",
     emptyMessage: "",
     customRender: renderInferencePage,
-  },
-  {
-    id: "nemoclaw-api-keys",
-    label: "API Keys",
-    icon: ICON_KEY,
-    title: "API Keys",
-    subtitle: "Configure your NVIDIA API keys for model endpoints",
-    emptyMessage: "",
-    customRender: renderApiKeysPage,
-    showStatusDot: true,
   },
 ];
 
@@ -91,18 +79,9 @@ function buildNavGroup(): HTMLElement {
     item.href = "#";
     item.className = "nav-item";
     item.dataset.nemoclawPage = page.id;
-
-    let dotHtml = "";
-    if (page.showStatusDot) {
-      const ok = areAllKeysConfigured();
-      const dotClass = ok ? "nemoclaw-nav-dot--ok" : "nemoclaw-nav-dot--missing";
-      dotHtml = `<span class="nemoclaw-nav-dot ${dotClass}"></span>`;
-    }
-
     item.innerHTML =
       `<span class="nav-item__icon" aria-hidden="true">${page.icon}</span>` +
-      `<span class="nav-item__text">${page.label}</span>` +
-      dotHtml;
+      `<span class="nav-item__text">${page.label}</span>`;
 
     item.addEventListener("click", (e) => {
       e.preventDefault();

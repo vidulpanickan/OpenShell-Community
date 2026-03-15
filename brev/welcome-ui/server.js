@@ -278,9 +278,6 @@ function removeCachedProvider(name) {
 function bootstrapConfigCache() {
   if (fs.existsSync(PROVIDER_CONFIG_CACHE)) return;
   writeConfigCache({
-    "nvidia-inference": {
-      OPENAI_BASE_URL: "https://inference-api.nvidia.com/v1",
-    },
     "nvidia-endpoints": {
       NVIDIA_BASE_URL: "https://integrate.api.nvidia.com/v1",
     },
@@ -887,12 +884,6 @@ function runInjectKey(key, keyHash) {
   log("inject-key", `step 1/4: received key (hash=${keyHash.slice(0, 12)}…)`);
 
   const providerUpdates = [
-    {
-      name: "nvidia-inference",
-      credential: `OPENAI_API_KEY=${key}`,
-      config: "OPENAI_BASE_URL=https://inference-api.nvidia.com/v1",
-      cache: { OPENAI_BASE_URL: "https://inference-api.nvidia.com/v1" },
-    },
     {
       name: "nvidia-endpoints",
       credential: `NVIDIA_API_KEY=${key}`,

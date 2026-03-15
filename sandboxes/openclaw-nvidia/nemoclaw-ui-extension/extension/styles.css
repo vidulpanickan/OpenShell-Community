@@ -174,6 +174,22 @@
   line-height: 1.55;
 }
 
+.nemoclaw-modal__partner-cta {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted, #71717a);
+}
+
+.nemoclaw-modal__partner-cta a {
+  color: #76B900;
+  text-decoration: none;
+}
+
+.nemoclaw-modal__partner-cta a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .nemoclaw-target-list {
   display: grid;
   gap: 10px;
@@ -470,6 +486,25 @@ main.content {
 
 .nemoclaw-model-powered:hover {
   color: #76B900;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nemoclaw-model-powered-block {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--muted, #71717a);
+  white-space: normal;
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+
+.nemoclaw-model-upgrade-link {
+  color: #76B900;
+  text-decoration: none;
+}
+
+.nemoclaw-model-upgrade-link:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -966,6 +1001,22 @@ body.nemoclaw-switching openclaw-app {
 
 .nemoclaw-key-intro__link:hover {
   color: #8ad400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nemoclaw-key-intro__partner-cta {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted, #71717a);
+}
+
+.nemoclaw-key-intro__partner-cta a {
+  color: #76B900;
+  text-decoration: none;
+}
+
+.nemoclaw-key-intro__partner-cta a:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -2942,6 +2993,12 @@ body.nemoclaw-switching openclaw-app {
   z-index: 50;
 }
 
+/* Portaled to body so it is not clipped by overflow */
+.nemoclaw-policy-templates--portal {
+  position: fixed !important;
+  z-index: 10000 !important;
+}
+
 :root[data-theme="light"] .nemoclaw-policy-templates {
   background: var(--bg, #fff);
   box-shadow:
@@ -2951,8 +3008,10 @@ body.nemoclaw-switching openclaw-app {
 
 .nemoclaw-policy-template-option {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   padding: 8px 12px;
   border: none;
@@ -2964,6 +3023,23 @@ body.nemoclaw-switching openclaw-app {
   text-align: left;
   cursor: pointer;
   transition: background 100ms ease;
+}
+
+.nemoclaw-policy-template-option__logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.nemoclaw-policy-template-option .nemoclaw-policy-template-option__label {
+  flex: 1;
+  min-width: 0;
+}
+
+.nemoclaw-policy-template-option .nemoclaw-policy-template-option__meta {
+  width: 100%;
+  flex-basis: 100%;
 }
 
 .nemoclaw-policy-template-option:hover {
@@ -3215,6 +3291,119 @@ body.nemoclaw-switching openclaw-app {
   opacity: 0.6;
 }
 
+/* API keys section (Inference tab) */
+.nemoclaw-inference-apikeys {
+  padding: 12px 16px;
+  border: 1px solid var(--border, #27272a);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-elevated, #1a1d25);
+}
+
+:root[data-theme="light"] .nemoclaw-inference-apikeys {
+  background: #fff;
+}
+
+.nemoclaw-inference-apikeys__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.nemoclaw-inference-apikeys__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong, #fafafa);
+}
+
+.nemoclaw-inference-apikeys__intro {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted, #71717a);
+  margin: 0 0 12px;
+}
+
+.nemoclaw-inference-apikeys__link {
+  font-size: 12px;
+  color: var(--muted, #71717a);
+  text-decoration: none;
+}
+
+.nemoclaw-inference-apikeys__link:hover {
+  color: #76B900;
+}
+
+.nemoclaw-inference-apikeys__form.nemoclaw-key-form {
+  gap: 16px;
+}
+
+.nemoclaw-inference-apikeys__key-row {
+  display: grid;
+  gap: 6px;
+}
+
+.nemoclaw-inference-apikeys__key-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nemoclaw-inference-apikeys__key-row-delete {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted, #71717a);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nemoclaw-inference-apikeys__key-row-delete:hover {
+  background: var(--bg-hover, #27272a);
+  color: var(--text, #e4e4e7);
+}
+
+.nemoclaw-inference-apikeys__key-row-delete svg {
+  width: 14px;
+  height: 14px;
+}
+
+.nemoclaw-inference-apikeys__add-row {
+  margin-top: 4px;
+}
+
+.nemoclaw-inference-apikeys__add-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px dashed var(--border, #3f3f46);
+  border-radius: 8px;
+  background: var(--bg-subtle, #18181b);
+}
+
+.nemoclaw-inference-apikeys__add-form .nemoclaw-policy-input {
+  min-width: 0;
+}
+
+.nemoclaw-inference-apikeys__add-form .nemoclaw-policy-confirm-btn--create {
+  background: #76B900;
+  color: #0c0c0d;
+}
+
+.nemoclaw-inference-apikeys__add-form .nemoclaw-policy-confirm-btn--cancel {
+  background: transparent;
+  color: var(--muted, #71717a);
+}
+
 /* ===================================================================
    Quick Model Picker (Section 2) — horizontal chip strip
    =================================================================== */
@@ -3346,6 +3535,108 @@ body.nemoclaw-switching openclaw-app {
 }
 
 /* ===================================================================
+   Upgrade banner (NVIDIA free tier nudge)
+   =================================================================== */
+
+.nc-upgrade-banner {
+  font-size: 12px;
+  color: var(--muted, #71717a);
+  padding: 8px 12px;
+  background: rgba(118, 185, 0, 0.06);
+  border: 1px solid rgba(118, 185, 0, 0.2);
+  border-radius: var(--radius-md, 6px);
+}
+
+.nc-upgrade-banner__link {
+  color: #76B900;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.nc-upgrade-banner__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ===================================================================
+   Partner grid — Add a provider (NVIDIA Cloud Partners)
+   =================================================================== */
+
+.nc-partner-grid-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nc-partner-grid__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong, #fafafa);
+}
+
+.nc-partner-grid__sub {
+  font-size: 12px;
+  color: var(--muted, #71717a);
+}
+
+.nc-partner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.nc-partner-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 1px solid var(--border, #27272a);
+  border-radius: var(--radius-md, 6px);
+  background: var(--bg-elevated, #1a1d25);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text, #e4e4e7);
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.nc-partner-tile:hover {
+  border-color: rgba(118, 185, 0, 0.5);
+  background: rgba(118, 185, 0, 0.05);
+}
+
+.nc-partner-tile__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--muted, #71717a);
+}
+
+.nc-partner-tile__logo svg,
+.nc-partner-tile__logo .nc-partner-tile__logo-img,
+.nc-partner-tile__logo-img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
+
+.nc-partner-tile__name {
+  text-align: center;
+  line-height: 1.2;
+}
+
+.nc-partner-tile__add {
+  font-size: 11px;
+  color: #76B900;
+  font-weight: 600;
+}
+
+/* ===================================================================
    Active Configuration (Section 3)
    =================================================================== */
 
@@ -3365,6 +3656,45 @@ body.nemoclaw-switching openclaw-app {
   font-weight: 700;
   color: var(--text-strong, #fafafa);
   margin-bottom: 14px;
+}
+
+.nc-active-config__row--model {
+  align-items: flex-start;
+}
+
+.nc-active-config__row--model .nc-active-config__label {
+  padding-top: 10px;
+}
+
+.nc-active-config__model-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nc-active-config__model-quick-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nc-active-config__model-quick-strip .nc-quick-picker__strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nc-active-config__model-quick-strip .nc-quick-picker__add-btn {
+  margin: 0;
+}
+
+.nc-active-config__upgrade-banner {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #27272a);
 }
 
 .nc-active-config__row {
@@ -3445,6 +3775,7 @@ body.nemoclaw-switching openclaw-app {
   border: 1px solid var(--border, #27272a);
   border-radius: var(--radius-md, 8px);
   background: var(--bg-elevated, #1a1d25);
+  overflow: visible;
   overflow: hidden;
 }
 
@@ -3516,6 +3847,7 @@ body.nemoclaw-switching openclaw-app {
 
 .nc-providers-section__body {
   padding: 0 16px 16px;
+  overflow: visible;
 }
 
 /* --- Type Pills --- */
@@ -3693,10 +4025,92 @@ body.nemoclaw-switching openclaw-app {
   gap: 8px;
 }
 
+.nemoclaw-inference-cred-wrap {
+  margin-bottom: 12px;
+}
+
+.nemoclaw-inference-cred-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-strong, #fafafa);
+  margin-bottom: 8px;
+}
+
+.nemoclaw-inference-cred-wrap .nemoclaw-inference-cred-input-row {
+  margin-bottom: 8px;
+}
+
 .nemoclaw-inference-cred-input-row {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.nemoclaw-inference-cred-key-value-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nemoclaw-inference-cred-key-value-row .nemoclaw-inference-cred-key-input {
+  min-width: 160px;
+  flex: 0 1 auto;
+}
+
+.nemoclaw-inference-cred-key-value-row .nemoclaw-key-field__input-row {
+  flex: 1;
+  min-width: 140px;
+}
+
+.nemoclaw-inference-cred-key-value-row .nemoclaw-policy-icon-btn {
+  flex-shrink: 0;
+}
+
+.nemoclaw-inference-cred-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-bottom: 6px;
+}
+
+.nemoclaw-inference-cred-source__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted, #71717a);
+  cursor: pointer;
+}
+
+.nemoclaw-inference-cred-source__option input {
+  margin: 0;
+}
+
+.nemoclaw-inference-cred-source-select-wrap {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.nemoclaw-inference-cred-source-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.nemoclaw-inference-cred-source-line .nemoclaw-key-field__input-row {
+  flex: 1;
+  min-width: 160px;
+}
+
+.nemoclaw-inference-cred-input-row--inline .nemoclaw-inference-cred-source-select-wrap {
+  margin-bottom: 0;
+}
+
+.nemoclaw-inference-cred-source-select {
+  min-width: 180px;
 }
 
 /* --- Config key/value rows --- */

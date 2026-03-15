@@ -26,7 +26,12 @@ import { refreshModelSelector, setActiveModelFromExternal } from "./model-select
 import {
   CURATED_MODELS,
   getCuratedByModelId,
+  getUpgradeIntegrationsUrl,
+  PARTNER_PROVIDERS,
 } from "./model-registry.ts";
+import { getPartnerLogoImgSrc } from "./partner-logos.ts";
+import { buildApiKeysSection, getSectionCredentialEntries, getSectionCredentialKeyNames, getSectionKeyValue } from "./api-keys-page.ts";
+import { isPreviewMode } from "./preview-mode.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +59,9 @@ interface ProviderDraft {
   type: string;
   credentials: Record<string, string>;
   config: Record<string, string>;
+  /** When "section", use value from API keys section below when saving. */
+  /** For each credential key: "__custom__" = use draft.credentials; otherwise use section key value (e.g. OPENAI_API_KEY). */
+  _credentialSource?: Record<string, string>;
 }
 
 interface ProviderProfile {
@@ -99,6 +107,12 @@ const PROVIDER_TEMPLATES: { label: string; name: string; type: string; config: R
   { label: "OpenAI", name: "openai", type: "openai", config: { OPENAI_BASE_URL: "https://api.openai.com/v1" } },
   { label: "Anthropic", name: "anthropic", type: "anthropic", config: { ANTHROPIC_BASE_URL: "https://api.anthropic.com/v1" } },
   { label: "Local (LM Studio)", name: "local_lmstudio", type: "openai", config: { OPENAI_BASE_URL: "http://localhost:1234/v1" } },
+  ...PARTNER_PROVIDERS.map((p) => ({
+    label: p.name,
+    name: `partner_${p.id}`,
+    type: "openai" as const,
+    config: { [p.configUrlKey]: p.baseUrl },
+  })),
 ];
 
 const PROVIDER_TYPE_OPTIONS = ["openai", "anthropic", "nvidia"];
@@ -125,6 +139,7 @@ let providersExpanded = true;
 // ---------------------------------------------------------------------------
 
 async function fetchProviders(): Promise<InferenceProvider[]> {
+  if (isPreviewMode()) return [];
   const res = await fetch("/api/providers");
   if (!res.ok) throw new Error(`Failed to load providers: ${res.status}`);
   const body = await res.json();
@@ -133,6 +148,7 @@ async function fetchProviders(): Promise<InferenceProvider[]> {
 }
 
 async function apiCreateProvider(draft: { name: string; type: string; credentials: Record<string, string>; config: Record<string, string> }): Promise<void> {
+  if (isPreviewMode()) return;
   const res = await fetch("/api/providers", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -143,6 +159,7 @@ async function apiCreateProvider(draft: { name: string; type: string; credential
 }
 
 async function apiUpdateProvider(name: string, draft: { type: string; credentials: Record<string, string>; config: Record<string, string> }): Promise<void> {
+  if (isPreviewMode()) return;
   const res = await fetch(`/api/providers/${encodeURIComponent(name)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -153,12 +170,14 @@ async function apiUpdateProvider(name: string, draft: { type: string; credential
 }
 
 async function apiDeleteProvider(name: string): Promise<void> {
+  if (isPreviewMode()) return;
   const res = await fetch(`/api/providers/${encodeURIComponent(name)}`, { method: "DELETE" });
   const body = await res.json();
   if (!body.ok) throw new Error(body.error || "Delete failed");
 }
 
 async function fetchClusterInference(): Promise<ClusterInferenceRoute | null> {
+  if (isPreviewMode()) return null;
   const res = await fetch("/api/cluster-inference");
   if (!res.ok) return null;
   const body = await res.json();
@@ -167,6 +186,7 @@ async function fetchClusterInference(): Promise<ClusterInferenceRoute | null> {
 }
 
 async function apiSetClusterInference(providerName: string, modelId: string): Promise<void> {
+  if (isPreviewMode()) return;
   const res = await fetch("/api/cluster-inference", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -243,9 +263,9 @@ async function loadAndRender(container: HTMLElement): Promise<void> {
 function renderPageContent(page: HTMLElement): void {
   page.innerHTML = "";
   page.appendChild(buildGatewayStrip());
-  page.appendChild(buildQuickPicker());
   page.appendChild(buildActiveConfig());
   page.appendChild(buildProviderSection());
+  page.appendChild(buildApiKeysSection());
   saveBarEl = buildSaveBar();
   page.appendChild(saveBarEl);
 }
@@ -321,44 +341,38 @@ function saveCustomQuickSelects(items: { modelId: string; name: string; provider
   localStorage.setItem("nemoclaw:custom-quick-selects", JSON.stringify(items));
 }
 
-function buildQuickPicker(): HTMLElement {
-  const section = document.createElement("div");
-  section.className = "nc-quick-picker";
-
-  const label = document.createElement("div");
-  label.className = "nc-quick-picker__label";
-  label.textContent = "Quick Select";
-  section.appendChild(label);
+/** Builds only the chip strip (no "Quick Select" label, no Add). Used inside Active Config Model row. */
+function buildQuickPickerStrip(currentModelId: string, onRefresh: () => void): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "nc-active-config__model-quick-strip";
 
   const strip = document.createElement("div");
   strip.className = "nc-quick-picker__strip";
 
-  const currentModelId = pendingActivation?.modelId ?? activeRoute?.modelId ?? "";
-
   for (const curated of CURATED_MODELS) {
-    strip.appendChild(buildQuickChip(curated.modelId, curated.name, curated.providerName, currentModelId, section, false));
+    strip.appendChild(buildQuickChip(curated.modelId, curated.name, curated.providerName, currentModelId, null, false, onRefresh));
   }
 
   const custom = getCustomQuickSelects();
   const curatedIds = new Set(CURATED_MODELS.map((c) => c.modelId));
   for (const item of custom) {
     if (curatedIds.has(item.modelId)) continue;
-    strip.appendChild(buildQuickChip(item.modelId, item.name, item.providerName, currentModelId, section, true));
+    strip.appendChild(buildQuickChip(item.modelId, item.name, item.providerName, currentModelId, null, true, onRefresh));
   }
 
-  section.appendChild(strip);
-
-  const addBtn = document.createElement("button");
-  addBtn.type = "button";
-  addBtn.className = "nc-quick-picker__add-btn";
-  addBtn.innerHTML = `${ICON_PLUS} Add`;
-  addBtn.addEventListener("click", () => showAddQuickSelectForm(section));
-  section.appendChild(addBtn);
-
-  return section;
+  wrap.appendChild(strip);
+  return wrap;
 }
 
-function buildQuickChip(modelId: string, name: string, providerName: string, currentModelId: string, section: HTMLElement, removable: boolean): HTMLElement {
+function buildQuickChip(
+  modelId: string,
+  name: string,
+  providerName: string,
+  currentModelId: string,
+  section: HTMLElement | null,
+  removable: boolean,
+  onActivate?: () => void,
+): HTMLElement {
   const chip = document.createElement("button");
   chip.type = "button";
   const isActive = modelId === currentModelId;
@@ -378,7 +392,7 @@ function buildQuickChip(modelId: string, name: string, providerName: string, cur
       e.stopPropagation();
       const items = getCustomQuickSelects().filter((i) => i.modelId !== modelId);
       saveCustomQuickSelects(items);
-      chip.remove();
+      if (onActivate) onActivate();
       refreshModelSelector().catch(() => {});
     });
     chip.appendChild(removeBtn);
@@ -387,70 +401,14 @@ function buildQuickChip(modelId: string, name: string, providerName: string, cur
   chip.addEventListener("click", () => {
     pendingActivation = { providerName, modelId };
     markDirty();
-    rerenderQuickPicker(section);
-    rerenderActiveConfig();
+    if (onActivate) onActivate();
+    else if (section) {
+      rerenderQuickPicker(section);
+      rerenderActiveConfig();
+    }
   });
 
   return chip;
-}
-
-function showAddQuickSelectForm(section: HTMLElement): void {
-  const existing = section.querySelector(".nc-quick-picker__add-form");
-  if (existing) { existing.remove(); return; }
-
-  const form = document.createElement("div");
-  form.className = "nc-quick-picker__add-form";
-
-  const nameInput = document.createElement("input");
-  nameInput.type = "text";
-  nameInput.className = "nemoclaw-policy-input nc-quick-picker__add-input";
-  nameInput.placeholder = "Display name";
-
-  const modelInput = document.createElement("input");
-  modelInput.type = "text";
-  modelInput.className = "nemoclaw-policy-input nc-quick-picker__add-input";
-  modelInput.placeholder = "Model ID (e.g. nvidia/meta/llama-3.3-70b-instruct)";
-
-  const provInput = document.createElement("input");
-  provInput.type = "text";
-  provInput.className = "nemoclaw-policy-input nc-quick-picker__add-input";
-  provInput.placeholder = "Provider name (e.g. nvidia-inference)";
-  provInput.value = "nvidia-inference";
-
-  const btns = document.createElement("div");
-  btns.className = "nc-quick-picker__add-actions";
-  const addConfirm = document.createElement("button");
-  addConfirm.type = "button";
-  addConfirm.className = "nemoclaw-policy-confirm-btn nemoclaw-policy-confirm-btn--create";
-  addConfirm.textContent = "Add";
-  const cancelBtn = document.createElement("button");
-  cancelBtn.type = "button";
-  cancelBtn.className = "nemoclaw-policy-confirm-btn nemoclaw-policy-confirm-btn--cancel";
-  cancelBtn.textContent = "Cancel";
-
-  cancelBtn.addEventListener("click", () => form.remove());
-  addConfirm.addEventListener("click", () => {
-    const name = nameInput.value.trim();
-    const mid = modelInput.value.trim();
-    const prov = provInput.value.trim();
-    if (!name || !mid || !prov) return;
-    const items = getCustomQuickSelects();
-    if (items.some((i) => i.modelId === mid)) { form.remove(); return; }
-    items.push({ modelId: mid, name, providerName: prov });
-    saveCustomQuickSelects(items);
-    form.remove();
-    rerenderQuickPicker(section);
-    refreshModelSelector().catch(() => {});
-  });
-
-  btns.appendChild(addConfirm);
-  btns.appendChild(cancelBtn);
-  form.appendChild(nameInput);
-  form.appendChild(modelInput);
-  form.appendChild(provInput);
-  form.appendChild(btns);
-  section.appendChild(form);
-  requestAnimationFrame(() => nameInput.focus());
 }
 
 function rerenderQuickPicker(section: HTMLElement): void {
@@ -458,8 +416,43 @@ function rerenderQuickPicker(section: HTMLElement): void {
   section.replaceWith(fresh);
 }
 
+function buildQuickPicker(): HTMLElement {
+  const section = document.createElement("div");
+  section.className = "nc-quick-picker";
+  const label = document.createElement("div");
+  label.className = "nc-quick-picker__label";
+  label.textContent = "Quick Select";
+  section.appendChild(label);
+  const currentModelId = pendingActivation?.modelId ?? activeRoute?.modelId ?? "";
+  const stripWrap = buildQuickPickerStrip(currentModelId, () => {
+    rerenderQuickPicker(section);
+    rerenderActiveConfig();
+  });
+  section.appendChild(stripWrap);
+  return section;
+}
+
 // ---------------------------------------------------------------------------
-// Section 3 — Active Configuration
+// Upgrade banner — when active route is NVIDIA free tier
+// ---------------------------------------------------------------------------
+
+function buildUpgradeBanner(): HTMLElement | null {
+  const routeProviderName = pendingActivation?.providerName ?? activeRoute?.providerName ?? "";
+  const routeModelId = pendingActivation?.modelId ?? activeRoute?.modelId ?? "";
+  const isNvidiaFree =
+    routeProviderName === "nvidia-endpoints" ||
+    (routeProviderName !== "" && routeProviderName.toLowerCase().includes("nvidia"));
+  if (!isNvidiaFree || !routeModelId) return null;
+
+  const banner = document.createElement("div");
+  banner.className = "nc-upgrade-banner";
+  const url = getUpgradeIntegrationsUrl(routeModelId);
+  banner.innerHTML = `On NVIDIA free tier. For higher limits and speed: <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="nc-upgrade-banner__link">OpenShell integrations</a>`;
+  return banner;
+}
+
+// ---------------------------------------------------------------------------
+// Active Configuration (includes Quick Select and optional upgrade banner)
 // ---------------------------------------------------------------------------
 
 function buildActiveConfig(): HTMLElement {
@@ -507,16 +500,16 @@ function buildActiveConfig(): HTMLElement {
     };
     markDirty();
     rerenderActiveConfig();
-    const pickerSection = pageContainer?.querySelector(".nc-quick-picker");
-    if (pickerSection) rerenderQuickPicker(pickerSection as HTMLElement);
   });
 
-  // Model row
+  // Model row: input + embedded quick-select chips (no standalone "Quick Select" block)
   const modelRow = document.createElement("div");
-  modelRow.className = "nc-active-config__row";
+  modelRow.className = "nc-active-config__row nc-active-config__row--model";
   const modelLabel = document.createElement("label");
   modelLabel.className = "nc-active-config__label";
   modelLabel.textContent = "Model";
+  const modelWrap = document.createElement("div");
+  modelWrap.className = "nc-active-config__model-wrap";
   const modelInput = document.createElement("input");
   modelInput.type = "text";
   modelInput.className = "nemoclaw-policy-input nc-active-config__model-input";
@@ -528,11 +521,12 @@ function buildActiveConfig(): HTMLElement {
       modelId: modelInput.value,
     };
     markDirty();
-    const pickerSection = pageContainer?.querySelector(".nc-quick-picker");
-    if (pickerSection) rerenderQuickPicker(pickerSection as HTMLElement);
   });
+  const quickStrip = buildQuickPickerStrip(routeModelId, rerenderActiveConfig);
+  modelWrap.appendChild(modelInput);
+  modelWrap.appendChild(quickStrip);
   modelRow.appendChild(modelLabel);
-  modelRow.appendChild(modelInput);
+  modelRow.appendChild(modelWrap);
   card.appendChild(modelRow);
 
   // Endpoint row (read-only, derived from provider config)
@@ -568,6 +562,12 @@ function buildActiveConfig(): HTMLElement {
   statusRow.appendChild(statusLabel);
   statusRow.appendChild(statusValue);
   card.appendChild(statusRow);
+
+  const upgradeBanner = buildUpgradeBanner();
+  if (upgradeBanner) {
+    upgradeBanner.classList.add("nc-active-config__upgrade-banner");
+    card.appendChild(upgradeBanner);
+  }
 
   return card;
 }
@@ -618,15 +618,11 @@ function buildProviderSection(): HTMLElement {
 
   section.appendChild(headerRow);
 
-  // Provider list
+  // Provider list — no empty-state tiles; Add Provider dropdown is the only way to add
   const list = document.createElement("div");
   list.className = "nemoclaw-policy-netpolicies nemoclaw-inference-provider-list";
-  if (providers.length === 0) {
-    list.appendChild(buildProviderEmptyState(list));
-  } else {
-    for (const provider of providers) {
-      list.appendChild(buildProviderCard(provider, list));
-    }
+  for (const provider of providers) {
+    list.appendChild(buildProviderCard(provider, list));
   }
   body.appendChild(list);
 
@@ -652,7 +648,18 @@ function buildProviderSection(): HTMLElement {
     if (dropdownOpen) { closeDropdown(); return; }
     dropdownOpen = true;
     dropdownEl = document.createElement("div");
-    dropdownEl.className = "nemoclaw-policy-templates";
+    dropdownEl.className = "nemoclaw-policy-templates nemoclaw-policy-templates--portal";
+
+    const rect = addBtn.getBoundingClientRect();
+    const gap = 6;
+    const maxHeight = Math.max(200, rect.top - 12);
+    dropdownEl.style.position = "fixed";
+    dropdownEl.style.bottom = `${window.innerHeight - rect.top + gap}px`;
+    dropdownEl.style.left = `${rect.left}px`;
+    dropdownEl.style.minWidth = `${Math.max(280, rect.width)}px`;
+    dropdownEl.style.maxHeight = `${maxHeight}px`;
+    dropdownEl.style.overflowY = "auto";
+    dropdownEl.style.zIndex = "10000";
 
     const blankOpt = document.createElement("button");
     blankOpt.type = "button";
@@ -671,15 +678,36 @@ function buildProviderSection(): HTMLElement {
       const opt = document.createElement("button");
       opt.type = "button";
       opt.className = "nemoclaw-policy-template-option";
-      opt.innerHTML = `<span class="nemoclaw-policy-template-option__label">${escapeHtml(tmpl.label)}</span>
-        <span class="nemoclaw-policy-template-option__meta">${escapeHtml(tmpl.type)} &mdash; ${escapeHtml(urlPreview)}</span>`;
+
+      const partnerId = tmpl.name.startsWith("partner_") ? tmpl.name.slice(8) : "";
+      const partner = partnerId ? PARTNER_PROVIDERS.find((p) => p.id === partnerId) : null;
+      if (partner) {
+        const img = document.createElement("img");
+        img.src = getPartnerLogoImgSrc(partner.logoId);
+        img.alt = "";
+        img.width = 20;
+        img.height = 20;
+        img.className = "nemoclaw-policy-template-option__logo";
+        img.onerror = () => { img.src = getPartnerLogoImgSrc("generic"); };
+        opt.appendChild(img);
+      }
+
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "nemoclaw-policy-template-option__label";
+      labelSpan.textContent = tmpl.label;
+      opt.appendChild(labelSpan);
+      const metaSpan = document.createElement("span");
+      metaSpan.className = "nemoclaw-policy-template-option__meta";
+      metaSpan.textContent = `${tmpl.type} — ${urlPreview}`;
+      opt.appendChild(metaSpan);
+
       opt.addEventListener("click", (ev) => {
         ev.stopPropagation(); closeDropdown();
         showInlineNewProviderForm(list, tmpl);
       });
       dropdownEl.appendChild(opt);
     }
-    addWrap.appendChild(dropdownEl);
+    document.body.appendChild(dropdownEl);
   });
 
   document.addEventListener("click", () => { if (dropdownOpen) closeDropdown(); });
@@ -687,27 +715,6 @@ function buildProviderSection(): HTMLElement {
   body.appendChild(addWrap);
   section.appendChild(body);
   return section;
-}
-
-function buildProviderEmptyState(list: HTMLElement): HTMLElement {
-  const wrap = document.createElement("div");
-  wrap.className = "nemoclaw-inference-empty-tiles";
-  for (const tmpl of PROVIDER_TEMPLATES) {
-    const profile = PROVIDER_PROFILES[tmpl.type];
-    const tile = document.createElement("button");
-    tile.type = "button";
-    tile.className = "nemoclaw-inference-empty-tile";
-    tile.innerHTML = `
-      <span class="nemoclaw-inference-empty-tile__label">${escapeHtml(tmpl.label)}</span>
-      <span class="nemoclaw-inference-empty-tile__type">${escapeHtml(tmpl.type)}</span>
-      <span class="nemoclaw-inference-empty-tile__url">${escapeHtml(profile?.defaultUrl || "")}</span>`;
-    tile.addEventListener("click", () => {
-      wrap.remove();
-      showInlineNewProviderForm(list, tmpl);
-    });
-    wrap.appendChild(tile);
-  }
-  return wrap;
 }
 
 // ---------------------------------------------------------------------------
@@ -719,6 +726,25 @@ function getProviderDraft(p: InferenceProvider): ProviderDraft {
     p._draft = { type: p.type, credentials: {}, config: { ...(p.configValues || {}) } };
   }
   return p._draft;
+}
+
+/** Resolve credentials for save: use section key value when _credentialSource[k] is a section key name; otherwise use custom. */
+function resolveCredentialsForSave(draft: ProviderDraft): Record<string, string> {
+  const out: Record<string, string> = {};
+  const source = draft._credentialSource || {};
+  const sectionKeys = getSectionCredentialKeyNames();
+  const allKeys = new Set([...Object.keys(draft.credentials), ...Object.keys(source)]);
+  for (const k of allKeys) {
+    const src = source[k];
+    const sectionKey = src === "section" ? k : src;
+    if (sectionKey && sectionKey !== CREDENTIAL_SOURCE_CUSTOM && sectionKeys.includes(sectionKey)) {
+      const v = getSectionKeyValue(sectionKey);
+      if (v) out[k] = v;
+    } else if (draft.credentials[k]) {
+      out[k] = draft.credentials[k];
+    }
+  }
+  return out;
 }
 
 function getUrlPreview(p: InferenceProvider): string {
@@ -989,44 +1015,33 @@ function renderProviderBody(body: HTMLElement, provider: InferenceProvider): voi
   typeRow.appendChild(typeField);
   body.appendChild(typeRow);
 
-  // Credentials
-  const credRow = document.createElement("div");
-  credRow.className = "nemoclaw-inference-flat-row";
-  if (provider._isNew) {
-    credRow.appendChild(buildCredentialInput(provider, profile.credentialKey));
-  } else if (provider.credentialKeys.length > 0) {
-    const chipRow = document.createElement("div");
-    chipRow.className = "nemoclaw-inference-cred-chips";
-    for (const key of provider.credentialKeys) {
-      const chip = document.createElement("span");
-      chip.className = "nemoclaw-inference-cred-chip";
-      chip.innerHTML = `<code>${escapeHtml(key)}</code> <span class="nemoclaw-inference-cred-chip__status">configured</span>`;
-      chipRow.appendChild(chip);
-    }
-    credRow.appendChild(chipRow);
+  // Credentials — always show inline inputs; no chips or Rotate
+  const credWrap = document.createElement("div");
+  credWrap.className = "nemoclaw-inference-cred-wrap";
+  const credHeading = document.createElement("div");
+  credHeading.className = "nemoclaw-inference-cred-heading";
+  credHeading.textContent = "API keys";
+  credWrap.appendChild(credHeading);
 
-    const rotateToggle = document.createElement("button");
-    rotateToggle.type = "button";
-    rotateToggle.className = "nemoclaw-policy-ep-advanced-toggle";
-    rotateToggle.innerHTML = `<span class="nemoclaw-policy-ep-advanced-toggle__chevron">${ICON_CHEVRON_RIGHT}</span> Rotate`;
-    let rotateOpen = Object.keys(draft.credentials).length > 0;
-    const rotatePanel = document.createElement("div");
-    rotatePanel.style.display = rotateOpen ? "" : "none";
-    if (rotateOpen) rotateToggle.classList.add("nemoclaw-policy-ep-advanced-toggle--open");
-    for (const key of provider.credentialKeys) {
-      rotatePanel.appendChild(buildCredentialInput(provider, key));
-    }
-    rotateToggle.addEventListener("click", () => {
-      rotateOpen = !rotateOpen;
-      rotatePanel.style.display = rotateOpen ? "" : "none";
-      rotateToggle.classList.toggle("nemoclaw-policy-ep-advanced-toggle--open", rotateOpen);
-    });
-    credRow.appendChild(rotateToggle);
-    credRow.appendChild(rotatePanel);
-  } else {
-    credRow.appendChild(buildCredentialInput(provider, profile.credentialKey));
+  const allCredKeys = provider._isNew
+    ? [profile.credentialKey]
+    : [...new Set([...provider.credentialKeys, ...Object.keys(draft.credentials)])];
+  for (const key of allCredKeys) {
+    credWrap.appendChild(buildCredentialInput(provider, key));
   }
-  body.appendChild(credRow);
+
+  const addCredBtn = document.createElement("button");
+  addCredBtn.type = "button";
+  addCredBtn.className = "nemoclaw-policy-add-small-btn";
+  addCredBtn.innerHTML = `${ICON_PLUS} Add credential`;
+  addCredBtn.addEventListener("click", () => {
+    const row = buildCredentialKeyValueRow(provider, credWrap);
+    credWrap.insertBefore(row, addCredBtn);
+    if (!provider._isNew) changeTracker.modified.add(provider.name);
+    markDirty();
+  });
+  credWrap.appendChild(addCredBtn);
+  body.appendChild(credWrap);
 
   // Config key-value pairs (label "Endpoint" for *_BASE_URL keys)
   const configRow = document.createElement("div");
@@ -1056,19 +1071,59 @@ function renderProviderBody(body: HTMLElement, provider: InferenceProvider): voi
 // Credential input
 // ---------------------------------------------------------------------------
 
+const CREDENTIAL_SOURCE_CUSTOM = "__custom__";
+
 function buildCredentialInput(provider: InferenceProvider, keyName: string): HTMLElement {
   const draft = getProviderDraft(provider);
+  const sectionEntries = getSectionCredentialEntries();
+  if (!draft._credentialSource) draft._credentialSource = {};
+  let current = draft._credentialSource[keyName];
+  if (current === "section") {
+    current = keyName;
+    draft._credentialSource[keyName] = keyName;
+  }
+  if (!(keyName in draft._credentialSource)) draft._credentialSource[keyName] = CREDENTIAL_SOURCE_CUSTOM;
+  const isCustom = !current || current === CREDENTIAL_SOURCE_CUSTOM;
+
   const row = document.createElement("div");
-  row.className = "nemoclaw-inference-cred-input-row";
+  row.className = "nemoclaw-inference-cred-input-row nemoclaw-inference-cred-input-row--inline";
+
   const label = document.createElement("label");
   label.className = "nemoclaw-policy-field";
   label.innerHTML = `<span class="nemoclaw-policy-field__label">${escapeHtml(keyName)}</span>`;
+
+  const selectWrap = document.createElement("div");
+  selectWrap.className = "nemoclaw-inference-cred-source-select-wrap";
+  const select = document.createElement("select");
+  select.className = "nemoclaw-policy-select nemoclaw-inference-cred-source-select";
+  const customOpt = document.createElement("option");
+  customOpt.value = CREDENTIAL_SOURCE_CUSTOM;
+  customOpt.textContent = "Custom";
+  select.appendChild(customOpt);
+  for (const { keyName: sectionKey, label: sectionLabel } of sectionEntries) {
+    const opt = document.createElement("option");
+    opt.value = sectionKey;
+    opt.textContent = sectionLabel;
+    if (current === sectionKey) opt.selected = true;
+    select.appendChild(opt);
+  }
+  if (isCustom) select.selectedIndex = 0;
+  select.addEventListener("change", () => {
+    draft._credentialSource![keyName] = select.value;
+    if (!provider._isNew) changeTracker.modified.add(provider.name);
+    markDirty();
+    inputWrap.style.display = select.value === CREDENTIAL_SOURCE_CUSTOM ? "" : "none";
+  });
+  selectWrap.appendChild(select);
+
   const inputWrap = document.createElement("div");
   inputWrap.className = "nemoclaw-key-field__input-row";
+  if (!isCustom) inputWrap.style.display = "none";
+
   const input = document.createElement("input");
   input.type = "password";
   input.className = "nemoclaw-policy-input";
-  input.placeholder = provider._isNew ? "sk-... or nvapi-..." : "Enter new value to rotate";
+  input.placeholder = "Paste value";
   input.value = draft.credentials[keyName] || "";
   input.addEventListener("input", () => {
     if (input.value.trim()) { draft.credentials[keyName] = input.value; }
@@ -1087,8 +1142,73 @@ function buildCredentialInput(provider: InferenceProvider, keyName: string): HTM
   });
   inputWrap.appendChild(input);
   inputWrap.appendChild(toggleBtn);
-  label.appendChild(inputWrap);
+
+  const lineWrap = document.createElement("div");
+  lineWrap.className = "nemoclaw-inference-cred-source-line";
+  lineWrap.appendChild(selectWrap);
+  lineWrap.appendChild(inputWrap);
+  label.appendChild(lineWrap);
   row.appendChild(label);
+  return row;
+}
+
+/** Row for adding a new credential (key name + value). */
+function buildCredentialKeyValueRow(provider: InferenceProvider, credWrap: HTMLElement): HTMLElement {
+  const draft = getProviderDraft(provider);
+  const row = document.createElement("div");
+  row.className = "nemoclaw-inference-cred-input-row nemoclaw-inference-cred-key-value-row";
+
+  const keyInput = document.createElement("input");
+  keyInput.type = "text";
+  keyInput.className = "nemoclaw-policy-input nemoclaw-inference-cred-key-input";
+  keyInput.placeholder = "e.g. OPENAI_API_KEY";
+
+  const inputWrap = document.createElement("div");
+  inputWrap.className = "nemoclaw-key-field__input-row";
+  const valInput = document.createElement("input");
+  valInput.type = "password";
+  valInput.className = "nemoclaw-policy-input";
+  valInput.placeholder = "Paste value";
+  const updateDraft = () => {
+    const k = keyInput.value.trim();
+    if (k) {
+      if (valInput.value.trim()) draft.credentials[k] = valInput.value;
+      else delete draft.credentials[k];
+    }
+    if (!provider._isNew) changeTracker.modified.add(provider.name);
+    markDirty();
+  };
+  keyInput.addEventListener("input", updateDraft);
+  valInput.addEventListener("input", updateDraft);
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.className = "nemoclaw-key-field__toggle";
+  toggleBtn.innerHTML = ICON_EYE;
+  toggleBtn.addEventListener("click", () => {
+    const isHidden = valInput.type === "password";
+    valInput.type = isHidden ? "text" : "password";
+    toggleBtn.innerHTML = isHidden ? ICON_EYE_OFF : ICON_EYE;
+  });
+  inputWrap.appendChild(valInput);
+  inputWrap.appendChild(toggleBtn);
+
+  const delBtn = document.createElement("button");
+  delBtn.type = "button";
+  delBtn.className = "nemoclaw-policy-icon-btn nemoclaw-policy-icon-btn--danger";
+  delBtn.title = "Remove";
+  delBtn.innerHTML = ICON_TRASH;
+  delBtn.addEventListener("click", () => {
+    const k = keyInput.value.trim();
+    if (k) delete draft.credentials[k];
+    if (!provider._isNew) changeTracker.modified.add(provider.name);
+    markDirty();
+    row.remove();
+  });
+
+  row.appendChild(keyInput);
+  row.appendChild(inputWrap);
+  row.appendChild(delBtn);
   return row;
 }
 
@@ -1228,12 +1348,12 @@ async function handleSave(btn: HTMLButtonElement, feedback: HTMLElement, bar: HT
         const draft = provider._draft;
         if (!draft) continue;
         try {
-          await apiCreateProvider({ name: provider.name, type: draft.type, credentials: draft.credentials, config: draft.config });
+          await apiCreateProvider({ name: provider.name, type: draft.type, credentials: resolveCredentialsForSave(draft), config: draft.config });
         } catch (err) {
           const msg = String(err);
           if (msg.includes("AlreadyExists") || msg.includes("already exists")) {
             try {
-              await apiUpdateProvider(provider.name, { type: draft.type, credentials: draft.credentials, config: draft.config });
+              await apiUpdateProvider(provider.name, { type: draft.type, credentials: resolveCredentialsForSave(draft), config: draft.config });
             } catch (updateErr) { errors.push(`Update ${provider.name}: ${updateErr}`); }
           } else {
             errors.push(`Create ${provider.name}: ${err}`);
@@ -1249,7 +1369,7 @@ async function handleSave(btn: HTMLButtonElement, feedback: HTMLElement, bar: HT
         const draft = provider._draft;
         if (!draft) continue;
         try {
-          await apiUpdateProvider(provider.name, { type: draft.type, credentials: draft.credentials, config: draft.config });
+          await apiUpdateProvider(provider.name, { type: draft.type, credentials: resolveCredentialsForSave(draft), config: draft.config });
         } catch (err) { errors.push(`Update ${provider.name}: ${err}`); }
       }
     }

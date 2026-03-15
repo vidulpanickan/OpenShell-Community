@@ -196,39 +196,3 @@ export function waitForStableConnection(
     void tick();
   });
 }
-
-/**
- * Wait until the app remains connected for a continuous stability window.
- *
- * This helps distinguish "socket connected for a moment" from "dashboard is
- * actually ready to be revealed after pairing/bootstrap settles".
- */
-export function waitForStableConnection(
-  stableForMs = 3_000,
-  timeoutMs = 15_000,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    let connectedSince = isAppConnected() ? Date.now() : 0;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-
-      if (isAppConnected()) {
-        if (!connectedSince) connectedSince = now;
-        if (now - connectedSince >= stableForMs) {
-          clearInterval(interval);
-          resolve();
-          return;
-        }
-      } else {
-        connectedSince = 0;
-      }
-
-      if (now - start > timeoutMs) {
-        clearInterval(interval);
-        reject(new Error("Timed out waiting for stable gateway connection"));
-      }
-    }, 500);
-  });
-}

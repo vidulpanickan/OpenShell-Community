@@ -19,7 +19,7 @@ describe("config cache", () => {
     bootstrapConfigCache();
     const cache = readCacheFile();
     expect(cache).not.toBeNull();
-    expect(cache["nvidia-inference"]).toBeDefined();
+    expect(cache["nvidia-endpoints"]).toBeDefined();
   });
 
   it("TC-CC02: bootstrapConfigCache is no-op when file already exists", () => {
@@ -29,13 +29,10 @@ describe("config cache", () => {
     expect(cache).toEqual({ custom: { x: 1 } });
   });
 
-  it("TC-CC03: default bootstrap content seeds both NVIDIA inference providers", () => {
+  it("TC-CC03: default bootstrap content seeds NVIDIA endpoints provider", () => {
     bootstrapConfigCache();
     const cache = readCacheFile();
     expect(cache).toEqual({
-      "nvidia-inference": {
-        OPENAI_BASE_URL: "https://inference-api.nvidia.com/v1",
-      },
       "nvidia-endpoints": {
         NVIDIA_BASE_URL: "https://integrate.api.nvidia.com/v1",
       },

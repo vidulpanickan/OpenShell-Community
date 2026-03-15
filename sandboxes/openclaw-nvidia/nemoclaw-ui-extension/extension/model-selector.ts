@@ -25,6 +25,7 @@ import {
   CURATED_MODELS,
   curatedToModelEntry,
   getCuratedByModelId,
+  getUpgradeIntegrationsUrl,
   type ModelEntry,
 } from "./model-registry.ts";
 import { patchConfig, waitForReconnect } from "./gateway-bridge.ts";
@@ -150,8 +151,12 @@ async function fetchDynamic(): Promise<void> {
 let activeBanner: HTMLElement | null = null;
 let propagationTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** Sandbox polls the gateway every 30s for route updates. */
-const ROUTE_PROPAGATION_SECS = 30;
+/**
+ * Max time (seconds) for inference route propagation into the sandbox.
+ * Must match DEFAULT_ROUTE_REFRESH_INTERVAL_SECS in
+ * openshell-sandbox/src/lib.rs (overridable there via OPENSHELL_ROUTE_REFRESH_INTERVAL_SECS).
+ */
+const ROUTE_PROPAGATION_SECS = 5;
 
 function showTransitionBanner(modelName: string): void {
   dismissTransitionBanner();
@@ -186,7 +191,7 @@ function showTransitionBannerLight(modelName: string): void {
 
 /**
  * Show an honest propagation banner for proxy-managed models.
- * The NemoClaw sandbox polls for route updates every 30 seconds, so the
+ * The NemoClaw sandbox polls for route updates every ROUTE_PROPAGATION_SECS seconds, so the
  * switch isn't truly instant.  This banner shows a progress bar that
  * counts down from ROUTE_PROPAGATION_SECS and transitions to a success
  * state when the propagation window has elapsed.
@@ -297,7 +302,7 @@ async function applyModelSelection(
     if (isProxyManaged(entry)) {
       // Proxy-managed models route through inference.local.  We update the
       // NemoClaw cluster-inference route (no OpenClaw config.patch, no
-      // gateway disconnect).  The sandbox polls every ~30s for route
+      // gateway disconnect).  The sandbox polls every ROUTE_PROPAGATION_SECS for route
       // updates, so we show an honest propagation countdown.
       const curated = getCuratedByModelId(entry.providerConfig.models[0]?.id || "");
       const provName = curated?.providerName || entry.providerKey.replace(/^dynamic-/, "");
@@ -333,7 +338,7 @@ async function applyModelSelection(
         if (valueEl) valueEl.textContent = prev.name;
         updateDropdownSelection(wrapper, previousModelId);
         updateTransitionBannerError(
-          `API key not configured. <a href="#" data-nemoclaw-goto="nemoclaw-api-keys">Add your keys</a> to switch models.`,
+          `API key not configured. <a href="#" data-nemoclaw-goto="nemoclaw-inference-routes">Add your keys</a> in Inference to switch models.`,
         );
         return;
       }
@@ -460,14 +465,30 @@ function buildModelSelector(): HTMLElement {
 
   populateDropdown(dropdown);
 
+  const poweredByBlock = document.createElement("div");
+  poweredByBlock.className = "nemoclaw-model-powered-block";
   const poweredBy = document.createElement("a");
   poweredBy.className = "nemoclaw-model-powered";
   poweredBy.href = "https://build.nvidia.com/models";
   poweredBy.target = "_blank";
   poweredBy.rel = "noopener noreferrer";
-  poweredBy.textContent = "Powered by NVIDIA endpoints from build.nvidia.com";
+  poweredBy.textContent = "Free endpoints by NVIDIA";
+  const upgradeLink = document.createElement("a");
+  upgradeLink.className = "nemoclaw-model-upgrade-link";
+  upgradeLink.target = "_blank";
+  upgradeLink.rel = "noopener noreferrer";
+  upgradeLink.textContent = "Upgrade now";
+  function updateUpgradeLink(): void {
+    const entry = getModelById(selectedModelId);
+    const modelId = entry?.providerConfig?.models?.[0]?.id ?? "";
+    upgradeLink.href = getUpgradeIntegrationsUrl(modelId);
+  }
+  updateUpgradeLink();
+  poweredByBlock.appendChild(poweredBy);
+  poweredByBlock.appendChild(document.createTextNode(". Rate-limited. "));
+  poweredByBlock.appendChild(upgradeLink);
 
-  wrapper.appendChild(poweredBy);
+  wrapper.appendChild(poweredByBlock);
   wrapper.appendChild(trigger);
   wrapper.appendChild(dropdown);
 
@@ -504,6 +525,7 @@ function buildModelSelector(): HTMLElement {
     updateDropdownSelection(wrapper, newModelId);
     const valueEl = trigger.querySelector(".nemoclaw-model-trigger__value");
     if (valueEl) valueEl.textContent = entry.name;
+    updateUpgradeLink();
 
     dropdown.style.display = "none";
     trigger.setAttribute("aria-expanded", "false");
@@ -533,6 +555,7 @@ function buildModelSelector(): HTMLElement {
     if (valueEl) {
       valueEl.textContent = current ? current.name : "No model";
     }
+    updateUpgradeLink();
   });
 
   return wrapper;

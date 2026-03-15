@@ -35,11 +35,11 @@ function readCacheFile() {
 // CLI output fixtures matching the nemoclaw CLI text format
 
 const FIXTURES = {
-  providerListOutput: "nvidia-inference\ncustom-provider\n",
+  providerListOutput: "nvidia-endpoints\ncustom-provider\n",
 
   providerGetOutput: [
     "Id:              abc-123",
-    "Name:            nvidia-inference",
+    "Name:            nvidia-endpoints",
     "Type:            openai",
     "Credential keys: OPENAI_API_KEY",
     "Config keys:     OPENAI_BASE_URL",
@@ -55,19 +55,19 @@ const FIXTURES = {
 
   providerGetAnsi:
     "\x1b[32mId:\x1b[0m              abc-123\n" +
-    "\x1b[32mName:\x1b[0m            nvidia-inference\n" +
+    "\x1b[32mName:\x1b[0m            nvidia-endpoints\n" +
     "\x1b[32mType:\x1b[0m            openai\n" +
     "\x1b[32mCredential keys:\x1b[0m OPENAI_API_KEY\n" +
     "\x1b[32mConfig keys:\x1b[0m     OPENAI_BASE_URL\n",
 
   clusterInferenceOutput: [
-    "Provider:  nvidia-inference",
+    "Provider:  nvidia-endpoints",
     "Model:     meta/llama-3.1-70b-instruct",
     "Version:   2",
   ].join("\n"),
 
   clusterInferenceAnsi:
-    "\x1b[1;34mProvider:\x1b[0m  nvidia-inference\n" +
+    "\x1b[1;34mProvider:\x1b[0m  nvidia-endpoints\n" +
     "\x1b[1;34mModel:\x1b[0m     meta/llama-3.1-70b-instruct\n" +
     "\x1b[1;34mVersion:\x1b[0m   2\n",
 

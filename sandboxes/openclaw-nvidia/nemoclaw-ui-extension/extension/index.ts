@@ -3,8 +3,7 @@
  *
  * Injects into the OpenClaw UI:
  *   1. A green "Deploy DGX Spark/Station" CTA button in the topbar
- *   2. A "NeMoClaw" collapsible nav group with Policy, Inference Routes,
- *      and API Keys pages
+ *   2. A "NeMoClaw" collapsible nav group with Policy and Inference
  *   3. A model selector wired to NVIDIA endpoints
  *
  * Operates purely as an overlay — no original OpenClaw source files are modified.
@@ -17,6 +16,8 @@ import { injectModelSelector, watchChatCompose } from "./model-selector.ts";
 import { ingestKeysFromUrl, DEFAULT_MODEL, resolveApiKey, isKeyConfigured } from "./model-registry.ts";
 import { hasBlockingGatewayMessage, waitForStableConnection } from "./gateway-bridge.ts";
 import { syncKeysToProviders } from "./api-keys-page.ts";
+import { startDenialWatcher } from "./denial-watcher.ts";
+import { isPreviewMode } from "./preview-mode.ts";
 
 const STABLE_CONNECTION_WINDOW_MS = 1_500;
 const INITIAL_CONNECTION_TIMEOUT_MS = 20_000;
@@ -114,6 +115,7 @@ function revealApp(): void {
     overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
     setTimeout(() => overlay.remove(), 600);
   }
+  startDenialWatcher();
 }
 
 function shouldAllowRecoveryReload(): boolean {
@@ -184,6 +186,27 @@ function getOverlayTextForPairingState(state: PairingBootstrapState | null): str
 }
 
 function bootstrap() {
+  // Preview mode: no gateway, no pairing overlay — show UI immediately for local dev.
+  if (isPreviewMode()) {
+    document.body.setAttribute("data-nemoclaw-ready", "");
+    watchOpenClawNavClicks();
+    watchChatCompose();
+    watchGotoLinks();
+    if (inject()) {
+      injectModelSelector();
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      if (inject()) {
+        injectModelSelector();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => observer.disconnect(), 30_000);
+    return;
+  }
+
   console.info("[NeMoClaw] pairing bootstrap: start");
 
   let pairingPollTimer = 0;

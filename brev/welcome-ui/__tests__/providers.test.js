@@ -41,7 +41,7 @@ describe("GET /api/providers", () => {
     execFile.mockImplementation((cmd, args, opts, cb) => {
       if (typeof opts === "function") { cb = opts; opts = {}; }
       if (args?.[1] === "list") {
-        return cb(null, "nvidia-inference\n", "");
+        return cb(null, "nvidia-endpoints\n", "");
       }
       if (args?.[1] === "get") {
         return cb(null, FIXTURES.providerGetOutput, "");
@@ -54,7 +54,7 @@ describe("GET /api/providers", () => {
     expect(res.body.ok).toBe(true);
     expect(Array.isArray(res.body.providers)).toBe(true);
     expect(res.body.providers.length).toBe(1);
-    expect(res.body.providers[0].name).toBe("nvidia-inference");
+    expect(res.body.providers[0].name).toBe("nvidia-endpoints");
   });
 
   it("TC-PR02: provider list CLI failure returns 502", async () => {

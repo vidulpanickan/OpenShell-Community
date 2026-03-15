@@ -9,7 +9,6 @@
  *     `agents.defaults.model.primary`
  *
  * The two NVIDIA API platforms use separate API keys:
- *   - inference-api.nvidia.com  — NVIDIA_INFERENCE_API_KEY
  *   - integrate.api.nvidia.com  — NVIDIA_INTEGRATE_API_KEY
  *
  * Keys are resolved at call time: localStorage (user-entered) takes
@@ -131,21 +130,15 @@ export interface CuratedModel {
 
 export const CURATED_MODELS: readonly CuratedModel[] = [
   {
-    id: "curated-kimi-k25",
-    name: "Kimi K2.5",
-    modelId: "moonshotai/kimi-k2.5",
-    providerName: "nvidia-endpoints",
-  },
-  {
-    id: "curated-claude-opus",
-    name: "Claude Opus 4.6",
-    modelId: "aws/anthropic/bedrock-claude-opus-4-6",
-    providerName: "nvidia-inference",
-  },
-  {
     id: "curated-minimax-m25",
     name: "MiniMax M2.5",
     modelId: "minimaxai/minimax-m2.5",
+    providerName: "nvidia-endpoints",
+  },
+  {
+    id: "curated-kimi-k25",
+    name: "Kimi K2.5",
+    modelId: "moonshotai/kimi-k2.5",
     providerName: "nvidia-endpoints",
   },
   {
@@ -173,7 +166,7 @@ export function curatedToModelEntry(c: CuratedModel): ModelEntry {
   return {
     id: c.id,
     name: c.name,
-    isDefault: c.id === "curated-qwen35",
+    isDefault: c.id === "curated-minimax-m25",
     providerKey: key,
     modelRef: `${key}/${c.modelId}`,
     keyType: "inference",
@@ -208,19 +201,19 @@ const DEFAULT_PROVIDER_KEY = "curated-nvidia-endpoints";
 
 export const MODEL_REGISTRY: readonly ModelEntry[] = [
   {
-    id: "curated-qwen35",
-    name: "Qwen 3.5 397B",
+    id: "curated-minimax-m25",
+    name: "MiniMax M2.5",
     isDefault: true,
     providerKey: DEFAULT_PROVIDER_KEY,
-    modelRef: `${DEFAULT_PROVIDER_KEY}/qwen/qwen3.5-397b-a17b`,
+    modelRef: `${DEFAULT_PROVIDER_KEY}/minimaxai/minimax-m2.5`,
     keyType: "inference",
     providerConfig: {
       baseUrl: "https://inference.local/v1",
       api: "openai-completions",
       models: [
         {
-          id: "qwen/qwen3.5-397b-a17b",
-          name: "Qwen 3.5 397B",
+          id: "minimaxai/minimax-m2.5",
+          name: "MiniMax M2.5",
           reasoning: false,
           input: ["text"],
           cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -380,3 +373,47 @@ export function getApiKey(target: DeployTarget): string {
   }
   return getInferenceApiKey();
 }
+
+// ---------------------------------------------------------------------------
+// Upgrade / partner offramp — build.nvidia.com/openshell/integrations
+// ---------------------------------------------------------------------------
+
+const UPGRADE_INTEGRATIONS_BASE = "https://build.nvidia.com/openshell/integrations";
+
+/**
+ * URL for upgrading the same model via an NVIDIA Cloud Partner.
+ * Use when active route is NVIDIA free tier; pass current model id (e.g. qwen/qwen3.5-397b-a17b).
+ */
+export function getUpgradeIntegrationsUrl(modelId: string): string {
+  if (!modelId || !modelId.trim()) return UPGRADE_INTEGRATIONS_BASE;
+  return `${UPGRADE_INTEGRATIONS_BASE}?model=${encodeURIComponent(modelId.trim())}`;
+}
+
+/**
+ * Partner provider metadata for quick-add tiles and logos.
+ * OpenAI-compatible base URLs; credential key typically API_KEY or provider-specific.
+ * URLs verified from official docs where available; others are conventional placeholders
+ * (user can edit in Inference provider config).
+ */
+export interface PartnerProviderMeta {
+  id: string;
+  name: string;
+  baseUrl: string;
+  credentialKey: string;
+  configUrlKey: string;
+  /** LobeHub/lobe-icons icon id or "generic" for fallback */
+  logoId: string;
+}
+
+export const PARTNER_PROVIDERS: readonly PartnerProviderMeta[] = [
+  { id: "baseten", name: "Baseten", baseUrl: "https://inference.baseten.co/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "Baseten" },
+  { id: "bitdeer", name: "Bitdeer", baseUrl: "https://api-inference.bitdeer.ai/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "generic" },
+  { id: "coreweave", name: "CoreWeave", baseUrl: "https://api.coreweave.com/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "generic" },
+  { id: "deepinfra", name: "DeepInfra", baseUrl: "https://api.deepinfra.com/v1/openai", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "DeepInfra" },
+  { id: "digitalocean", name: "Digital Ocean", baseUrl: "https://inference.do-ai.run/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "generic" },
+  { id: "fireworks", name: "Fireworks AI", baseUrl: "https://api.fireworks.ai/inference/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "Fireworks" },
+  { id: "gmicloud", name: "GMI Cloud", baseUrl: "https://api.gmi-serving.com/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "generic" },
+  { id: "lightning", name: "Lightning AI", baseUrl: "https://lightning.ai/api/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "generic" },
+  { id: "togetherai", name: "Together AI", baseUrl: "https://api.together.xyz/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "TogetherAI" },
+  { id: "vultr", name: "Vultr", baseUrl: "https://api.vultr.com/v1", credentialKey: "OPENAI_API_KEY", configUrlKey: "OPENAI_BASE_URL", logoId: "generic" },
+];

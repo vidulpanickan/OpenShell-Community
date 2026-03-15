@@ -64,12 +64,6 @@ set -a
 source "$ENV_FILE"
 set +a
 
-if [ -z "${NVIDIA_INFERENCE_API_KEY:-}" ] || [ "$NVIDIA_INFERENCE_API_KEY" = "your-key-here" ]; then
-  echo -e "${RED}Error:${RESET} NVIDIA_INFERENCE_API_KEY is not set in .env"
-  echo "  Edit $ENV_FILE and provide your inference-api.nvidia.com key."
-  exit 1
-fi
-
 if [ -z "${NVIDIA_INTEGRATE_API_KEY:-}" ] || [ "$NVIDIA_INTEGRATE_API_KEY" = "your-key-here" ]; then
   echo -e "${RED}Error:${RESET} NVIDIA_INTEGRATE_API_KEY is not set in .env"
   echo "  Edit $ENV_FILE and provide your integrate.api.nvidia.com key."
@@ -89,11 +83,6 @@ echo -e "  Copied files:  ${GREEN}$FILE_COUNT${RESET} -> $TARGET_EXT/"
 # --- Substitute API key placeholders ---
 REGISTRY="$TARGET_EXT/model-registry.ts"
 KEYS_INJECTED=0
-
-if grep -q '__NVIDIA_INFERENCE_API_KEY__' "$REGISTRY" 2>/dev/null; then
-  sed -i "s|__NVIDIA_INFERENCE_API_KEY__|${NVIDIA_INFERENCE_API_KEY}|g" "$REGISTRY"
-  KEYS_INJECTED=$((KEYS_INJECTED + 1))
-fi
 
 if grep -q '__NVIDIA_INTEGRATE_API_KEY__' "$REGISTRY" 2>/dev/null; then
   sed -i "s|__NVIDIA_INTEGRATE_API_KEY__|${NVIDIA_INTEGRATE_API_KEY}|g" "$REGISTRY"

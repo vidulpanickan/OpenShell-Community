@@ -40,7 +40,7 @@ describe("GET /api/cluster-inference", () => {
     const res = await request(server).get("/api/cluster-inference");
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.providerName).toBe("nvidia-inference");
+    expect(res.body.providerName).toBe("nvidia-endpoints");
     expect(res.body.modelId).toBe("meta/llama-3.1-70b-instruct");
     expect(res.body.version).toBe(2);
   });
@@ -95,7 +95,7 @@ describe("GET /api/cluster-inference", () => {
 
     const res = await request(server).get("/api/cluster-inference");
     expect(res.status).toBe(200);
-    expect(res.body.providerName).toBe("nvidia-inference");
+    expect(res.body.providerName).toBe("nvidia-endpoints");
     expect(res.body.modelId).toBe("meta/llama-3.1-70b-instruct");
   });
 });
