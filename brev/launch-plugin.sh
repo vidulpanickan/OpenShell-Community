@@ -12,12 +12,16 @@ else
   SCRIPT_DIR="$(cd "$(dirname "$SOURCE_PATH")" && pwd)"
 fi
 
-ASSET_DIR="$SCRIPT_DIR/nemoclaw-plugin"
+ASSET_DIR=""
 
 LAUNCH_LOG="${LAUNCH_LOG:-/tmp/launch-plugin.log}"
 GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-${GITHUB_PAT:-}}}"
 GHCR_USER="${GHCR_USER:-}"
 GIT_HTTP_USER="${GIT_HTTP_USER:-${GHCR_USER:-x-access-token}}"
+COMMUNITY_REPO="${COMMUNITY_REPO:-NVIDIA/OpenShell-Community}"
+COMMUNITY_REF="${COMMUNITY_REF:-${COMMUNITY_BRANCH:-main}}"
+COMMUNITY_CLONE_ROOT="${COMMUNITY_CLONE_ROOT:-/home/ubuntu}"
+COMMUNITY_DIR="${COMMUNITY_DIR:-$COMMUNITY_CLONE_ROOT/OpenShell-Community}"
 PLUGIN_REPO="${PLUGIN_REPO:-NVIDIA/openshell-openclaw-plugin}"
 PLUGIN_REF="${PLUGIN_REF:-main}"
 PLUGIN_CLONE_ROOT="${PLUGIN_CLONE_ROOT:-/home/ubuntu}"
@@ -30,6 +34,8 @@ CODE_SERVER_PORT="${CODE_SERVER_PORT:-13337}"
 
 TARGET_USER="${SUDO_USER:-$(id -un)}"
 TARGET_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+NODE_BIN="${NODE_BIN:-}"
+NPM_BIN="${NPM_BIN:-}"
 mkdir -p "$(dirname "$LAUNCH_LOG")"
 touch "$LAUNCH_LOG"
 exec > >(tee -a "$LAUNCH_LOG") 2>&1
@@ -57,6 +63,101 @@ require_cmd() {
     log "Missing required command: $1"
     exit 1
   fi
+}
+
+resolve_node_tooling() {
+  if [[ -z "$NODE_BIN" ]]; then
+    NODE_BIN="$(command -v node || true)"
+  fi
+  if [[ -z "$NPM_BIN" ]]; then
+    NPM_BIN="$(command -v npm || true)"
+  fi
+
+  if [[ -z "$NODE_BIN" || -z "$NPM_BIN" ]]; then
+    log "Unable to resolve node/npm in the current shell."
+    exit 1
+  fi
+}
+
+sudo_with_node_path() {
+  local node_dir npm_dir path_prefix
+
+  resolve_node_tooling
+  node_dir="$(dirname "$NODE_BIN")"
+  npm_dir="$(dirname "$NPM_BIN")"
+  path_prefix="$node_dir"
+  if [[ "$npm_dir" != "$node_dir" ]]; then
+    path_prefix="${path_prefix}:$npm_dir"
+  fi
+
+  sudo env "PATH=${path_prefix}:$PATH" "$@"
+}
+
+sudo_npm() {
+  resolve_node_tooling
+  sudo_with_node_path "$NPM_BIN" "$@"
+}
+
+community_repo_has_assets() {
+  local repo_root="$1"
+  [[ -f "$repo_root/brev/nemoclaw-plugin/README.md" && -f "$repo_root/brev/nemoclaw-plugin/settings.json" ]]
+}
+
+resolve_clone_url() {
+  local repo="$1"
+  if [[ -n "$GITHUB_TOKEN" ]]; then
+    printf 'https://%s:%s@github.com/%s.git' "$GIT_HTTP_USER" "$GITHUB_TOKEN" "$repo"
+  else
+    printf 'https://github.com/%s.git' "$repo"
+  fi
+}
+
+clone_or_refresh_community_repo() {
+  local clone_url
+
+  mkdir -p "$(dirname "$COMMUNITY_DIR")"
+
+  if [[ -d "$COMMUNITY_DIR/.git" ]]; then
+    log "OpenShell-Community repo already exists at $COMMUNITY_DIR; refreshing checkout."
+    git -C "$COMMUNITY_DIR" fetch --tags --prune origin
+    git -C "$COMMUNITY_DIR" checkout "$COMMUNITY_REF"
+    git -C "$COMMUNITY_DIR" pull --ff-only origin "$COMMUNITY_REF"
+    return
+  fi
+
+  if [[ -e "$COMMUNITY_DIR" ]]; then
+    log "Community directory exists but is not a git checkout: $COMMUNITY_DIR"
+    exit 1
+  fi
+
+  clone_url="$(resolve_clone_url "$COMMUNITY_REPO")"
+  log "Cloning OpenShell-Community into $COMMUNITY_DIR (ref: $COMMUNITY_REF)"
+  git clone --branch "$COMMUNITY_REF" "$clone_url" "$COMMUNITY_DIR"
+}
+
+resolve_asset_dir() {
+  if [[ -n "$ASSET_DIR" && -f "$ASSET_DIR/nv-theme-0.0.1.vsix" ]]; then
+    return
+  fi
+
+  if [[ -f "$SCRIPT_DIR/nemoclaw-plugin/nv-theme-0.0.1.vsix" ]]; then
+    ASSET_DIR="$SCRIPT_DIR/nemoclaw-plugin"
+    return
+  fi
+
+  if community_repo_has_assets "$COMMUNITY_DIR" && [[ -f "$COMMUNITY_DIR/brev/nemoclaw-plugin/nv-theme-0.0.1.vsix" ]]; then
+    ASSET_DIR="$COMMUNITY_DIR/brev/nemoclaw-plugin"
+    return
+  fi
+
+  clone_or_refresh_community_repo
+
+  if ! community_repo_has_assets "$COMMUNITY_DIR" || [[ ! -f "$COMMUNITY_DIR/brev/nemoclaw-plugin/nv-theme-0.0.1.vsix" ]]; then
+    log "Unable to locate brev/nemoclaw-plugin assets in $COMMUNITY_DIR"
+    exit 1
+  fi
+
+  ASSET_DIR="$COMMUNITY_DIR/brev/nemoclaw-plugin"
 }
 
 apt_update_once() {
@@ -200,6 +301,7 @@ ensure_node() {
   if command -v npm >/dev/null 2>&1 && [[ -n "$node_major" ]] && (( node_major >= 20 )); then
     log "Node.js already installed: $(node --version)"
     log "npm already installed: $(npm --version)"
+    resolve_node_tooling
     return
   fi
 
@@ -207,6 +309,7 @@ ensure_node() {
   require_cmd curl
   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
   apt_install nodejs
+  resolve_node_tooling
 }
 
 ensure_docker() {
@@ -274,7 +377,7 @@ ensure_openclaw() {
   fi
 
   log "Installing OpenClaw ${OPENCLAW_VERSION}..."
-  sudo npm install -g "openclaw@${OPENCLAW_VERSION}"
+  sudo_npm install -g "openclaw@${OPENCLAW_VERSION}"
 }
 
 clone_plugin_repo() {
@@ -295,11 +398,10 @@ clone_plugin_repo() {
     exit 1
   fi
 
+  clone_url="$(resolve_clone_url "$PLUGIN_REPO")"
   if [[ -n "$GITHUB_TOKEN" ]]; then
-    clone_url="https://${GIT_HTTP_USER}:${GITHUB_TOKEN}@github.com/${PLUGIN_REPO}.git"
     log "Cloning plugin repo with token auth into $PLUGIN_DIR"
   else
-    clone_url="https://github.com/${PLUGIN_REPO}.git"
     log "Cloning plugin repo into $PLUGIN_DIR"
   fi
 
@@ -308,7 +410,7 @@ clone_plugin_repo() {
 
 install_plugin() {
   log "Installing openshell-openclaw-plugin globally from $PLUGIN_DIR"
-  sudo npm install -g "$PLUGIN_DIR"
+  sudo_npm install -g "$PLUGIN_DIR"
 }
 
 build_openclaw_plugin() {
@@ -435,6 +537,9 @@ main() {
 
   step "Installing OpenShell CLI"
   ensure_cli
+
+  step "Resolving launch assets"
+  resolve_asset_dir
 
   step "Installing OpenClaw"
   ensure_openclaw
