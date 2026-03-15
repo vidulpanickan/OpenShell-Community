@@ -383,10 +383,13 @@ const UPGRADE_INTEGRATIONS_BASE = "https://build.nvidia.com/openshell/integratio
 /**
  * URL for upgrading the same model via an NVIDIA Cloud Partner.
  * Use when active route is NVIDIA free tier; pass current model id (e.g. qwen/qwen3.5-397b-a17b).
+ * Query param uses short name only (e.g. minimax-m2.5) so integrations page resolves correctly.
  */
 export function getUpgradeIntegrationsUrl(modelId: string): string {
   if (!modelId || !modelId.trim()) return UPGRADE_INTEGRATIONS_BASE;
-  return `${UPGRADE_INTEGRATIONS_BASE}?model=${encodeURIComponent(modelId.trim())}`;
+  const trimmed = modelId.trim();
+  const shortName = trimmed.includes("/") ? trimmed.split("/").pop()! : trimmed;
+  return `${UPGRADE_INTEGRATIONS_BASE}?model=${encodeURIComponent(shortName)}`;
 }
 
 /**

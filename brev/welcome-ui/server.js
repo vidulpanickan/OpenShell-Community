@@ -1205,8 +1205,8 @@ async function handleClusterInferenceSet(req, res) {
   try {
     const result = await execFirstSuccess(
       [
-        cliArgs("inference", "set", "--provider", providerName, "--model", modelId),
-        cliArgs("cluster", "inference", "set", "--provider", providerName, "--model", modelId),
+        cliArgs("inference", "set", "--provider", providerName, "--model", modelId, "--no-verify"),
+        cliArgs("cluster", "inference", "set", "--provider", providerName, "--model", modelId, "--no-verify"),
       ],
       30000
     );

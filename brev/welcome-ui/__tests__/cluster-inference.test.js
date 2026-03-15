@@ -151,7 +151,7 @@ describe("POST /api/cluster-inference", () => {
     expect(res.status).toBe(400);
   });
 
-  it("TC-CI10: calls nemoclaw cluster inference set with --provider and --model", async () => {
+  it("TC-CI10: calls nemoclaw cluster inference set with --provider, --model, and --no-verify", async () => {
     execFile.mockImplementation((cmd, args, opts, cb) => {
       if (typeof opts === "function") { cb = opts; opts = {}; }
       cb(null, "", "");
@@ -170,5 +170,6 @@ describe("POST /api/cluster-inference", () => {
     expect(args).toContain("test-prov");
     expect(args).toContain("--model");
     expect(args).toContain("test-model");
+    expect(args).toContain("--no-verify");
   });
 });

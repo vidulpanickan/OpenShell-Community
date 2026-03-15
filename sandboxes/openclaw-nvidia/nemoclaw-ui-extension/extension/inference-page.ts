@@ -297,10 +297,10 @@ function buildGatewayStrip(): HTMLElement {
   tooltip.innerHTML = `
     <div class="nc-gateway-tooltip__row"><strong>Your Code</strong> sends requests to <code>inference.local</code></div>
     <div class="nc-gateway-tooltip__arrow">&darr;</div>
-    <div class="nc-gateway-tooltip__row"><strong>NemoClaw Proxy</strong> intercepts, injects credentials</div>
+    <div class="nc-gateway-tooltip__row"><strong>OpenShell Proxy</strong> intercepts, injects credentials</div>
     <div class="nc-gateway-tooltip__arrow">&darr;</div>
     <div class="nc-gateway-tooltip__row"><strong>Provider API</strong> receives authenticated request</div>
-    <div class="nc-gateway-tooltip__footer">${ICON_LOCK} Enforced by the NemoClaw runtime. Cannot be changed from within the sandbox.</div>`;
+    <div class="nc-gateway-tooltip__footer">${ICON_LOCK} Enforced by the OpenShell runtime. Cannot be changed from within the sandbox.</div>`;
   tooltip.style.display = "none";
 
   let tooltipOpen = false;

@@ -1,6 +1,26 @@
 /* ===========================================
-   NeMoClaw DevX — NVIDIA Green: #76B900
+   NeMoClaw DevX — NVIDIA brand colors (official)
+   https://www.nvidia.com/en-us/about-nvidia/legal-info/logo-brand-usage/
+   - NVIDIA Green: #76B900 (Pantone 376 C). Min contrast 1:10 on background.
+   - On light backgrounds we use a darker same-hue green for accents to meet
+     contrast; solid buttons use the accent variable with white text.
    =========================================== */
+
+:root {
+  --nvidia-green: #76B900;
+  --nvidia-green-hover: #6aa300;
+  --nvidia-green-active: #5a8500;
+  --nvidia-accent: var(--nvidia-green);
+  --nvidia-accent-hover: var(--nvidia-green-hover);
+  --nvidia-accent-active: var(--nvidia-green-active);
+}
+
+/* Light mode: use darker NVIDIA green for text/border accents (same hue, meets contrast) */
+:root[data-theme="light"] {
+  --nvidia-accent: #5a8c00;
+  --nvidia-accent-hover: #4a7600;
+  --nvidia-accent-active: #3d6200;
+}
 
 /* Hide the OpenClaw version-update banner */
 .update-banner {
@@ -18,9 +38,9 @@
   padding: 6px 14px;
   height: 32px;
   box-sizing: border-box;
-  border: 1px solid #76B900;
+  border: 1px solid var(--nvidia-accent);
   border-radius: var(--radius-full, 9999px);
-  background: #76B900;
+  background: var(--nvidia-accent);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -36,8 +56,8 @@
 }
 
 .nemoclaw-deploy-btn:hover {
-  background: #6aa300;
-  border-color: #6aa300;
+  background: var(--nvidia-accent-hover);
+  border-color: var(--nvidia-accent-hover);
   box-shadow:
     0 4px 12px rgba(118, 185, 0, 0.35),
     0 0 20px rgba(118, 185, 0, 0.15);
@@ -45,14 +65,14 @@
 }
 
 .nemoclaw-deploy-btn:active {
-  background: #5a8500;
-  border-color: #5a8500;
+  background: var(--nvidia-accent-active);
+  border-color: var(--nvidia-accent-active);
   transform: translateY(0);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .nemoclaw-deploy-btn:focus-visible {
-  outline: 2px solid #76B900;
+  outline: 2px solid var(--nvidia-accent);
   outline-offset: 2px;
 }
 
@@ -181,7 +201,7 @@
 }
 
 .nemoclaw-modal__partner-cta a {
-  color: #76B900;
+  color: var(--nvidia-accent);
   text-decoration: none;
 }
 
@@ -212,7 +232,7 @@
 }
 
 .nemoclaw-target:hover {
-  border-color: #76B900;
+  border-color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.06);
   box-shadow: 0 0 0 1px rgba(118, 185, 0, 0.15);
 }
@@ -224,7 +244,7 @@
   background: rgba(118, 185, 0, 0.12);
   display: grid;
   place-items: center;
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-target__icon svg {
@@ -259,7 +279,7 @@
 }
 
 .nemoclaw-target:hover .nemoclaw-target__arrow {
-  color: #76B900;
+  color: var(--nvidia-accent);
   transform: translateX(2px);
 }
 
@@ -296,7 +316,7 @@
 .nemoclaw-status--success {
   border: 1px solid rgba(118, 185, 0, 0.25);
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-status--error {
@@ -308,7 +328,7 @@
 .nemoclaw-status--loading {
   border: 1px solid rgba(118, 185, 0, 0.25);
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-status svg {
@@ -331,20 +351,20 @@
    =========================================== */
 
 .nemoclaw-nav-group .nav-label__text {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-nav-group .nav-label:hover .nav-label__text {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-nav-group .nav-label__chevron {
-  color: #76B900;
+  color: var(--nvidia-accent);
   opacity: 0.7;
 }
 
 .nemoclaw-nav-group .nav-item {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-nav-group .nav-item:hover {
@@ -352,7 +372,7 @@
 }
 
 .nemoclaw-nav-group .nav-item .nav-item__icon {
-  color: #76B900;
+  color: var(--nvidia-accent);
   opacity: 0.85;
 }
 
@@ -362,12 +382,12 @@
 }
 
 .nemoclaw-nav-group .nav-item.active {
-  color: #76B900;
+  color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.12);
 }
 
 .nemoclaw-nav-group .nav-item.active .nav-item__icon {
-  color: #76B900;
+  color: var(--nvidia-accent);
   opacity: 1;
 }
 
@@ -426,7 +446,7 @@ main.content {
   display: grid;
   place-items: center;
   margin-bottom: 20px;
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-empty-state__icon svg {
@@ -478,14 +498,14 @@ main.content {
 .nemoclaw-model-powered {
   font-size: 9px;
   font-weight: 500;
-  color: #76B900;
+  color: var(--nvidia-accent);
   text-decoration: none;
   white-space: nowrap;
   transition: color 150ms ease;
 }
 
 .nemoclaw-model-powered:hover {
-  color: #76B900;
+  color: var(--nvidia-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -500,7 +520,7 @@ main.content {
 }
 
 .nemoclaw-model-upgrade-link {
-  color: #76B900;
+  color: var(--nvidia-accent);
   text-decoration: none;
 }
 
@@ -536,7 +556,7 @@ main.content {
 }
 
 .nemoclaw-model-selector--open .nemoclaw-model-trigger {
-  border-color: #76B900;
+  border-color: var(--nvidia-accent);
 }
 
 .nemoclaw-model-trigger__label {
@@ -546,7 +566,7 @@ main.content {
 }
 
 .nemoclaw-model-trigger__value {
-  color: #76B900;
+  color: var(--nvidia-accent);
   font-size: 13px;
   font-weight: 600;
 }
@@ -563,7 +583,7 @@ main.content {
 
 .nemoclaw-model-selector--open .nemoclaw-model-trigger__chevron {
   transform: rotate(180deg);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-model-trigger__chevron svg {
@@ -628,7 +648,7 @@ main.content {
 }
 
 .nemoclaw-model-option--selected {
-  color: #76B900;
+  color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.10);
 }
 
@@ -679,7 +699,7 @@ body[data-nemoclaw-ready] .nemoclaw-connect-overlay {
   width: 32px;
   height: 32px;
   border: 3px solid rgba(118, 185, 0, 0.2);
-  border-top-color: #76B900;
+  border-top-color: var(--nvidia-accent);
   border-radius: 50%;
   animation: nemoclaw-spin 0.8s linear infinite;
 }
@@ -870,7 +890,7 @@ body.nemoclaw-switching openclaw-app {
   animation: nemoclaw-slide-down 200ms cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(118, 185, 0, 0.25);
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-switching-banner svg {
@@ -886,7 +906,7 @@ body.nemoclaw-switching openclaw-app {
 .nemoclaw-switching-banner--propagating {
   border-color: rgba(118, 185, 0, 0.2);
   background: rgba(118, 185, 0, 0.06);
-  color: #76B900;
+  color: var(--nvidia-accent);
   flex-wrap: wrap;
 }
 
@@ -911,13 +931,13 @@ body.nemoclaw-switching openclaw-app {
   height: 100%;
   width: 0%;
   border-radius: 2px;
-  background: #76B900;
+  background: var(--nvidia-accent);
 }
 
 .nemoclaw-switching-banner--success {
   border-color: rgba(118, 185, 0, 0.3);
   background: rgba(118, 185, 0, 0.1);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-switching-banner--error {
@@ -971,7 +991,7 @@ body.nemoclaw-switching openclaw-app {
   display: grid;
   place-items: center;
   margin-bottom: 16px;
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-key-intro__icon svg {
@@ -994,7 +1014,7 @@ body.nemoclaw-switching openclaw-app {
 .nemoclaw-key-intro__link {
   font-size: 13px;
   font-weight: 600;
-  color: #76B900;
+  color: var(--nvidia-accent);
   text-decoration: none;
   transition: color 150ms ease;
 }
@@ -1012,7 +1032,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-key-intro__partner-cta a {
-  color: #76B900;
+  color: var(--nvidia-accent);
   text-decoration: none;
 }
 
@@ -1077,7 +1097,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-key-field__input:focus {
-  border-color: #76B900;
+  border-color: var(--nvidia-accent);
   box-shadow: 0 0 0 2px rgba(118, 185, 0, 0.2);
 }
 
@@ -1128,7 +1148,7 @@ body.nemoclaw-switching openclaw-app {
 
 .nemoclaw-key-dot--ok,
 .nemoclaw-nav-dot--ok {
-  background: #76B900;
+  background: var(--nvidia-accent);
   box-shadow: 0 0 4px rgba(118, 185, 0, 0.5);
 }
 
@@ -1152,9 +1172,9 @@ body.nemoclaw-switching openclaw-app {
   align-items: center;
   gap: 6px;
   padding: 10px 24px;
-  border: 1px solid #76B900;
+  border: 1px solid var(--nvidia-accent);
   border-radius: var(--radius-md, 8px);
-  background: #76B900;
+  background: var(--nvidia-accent);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
@@ -1164,20 +1184,20 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-key-save:hover {
-  background: #6aa300;
-  border-color: #6aa300;
+  background: var(--nvidia-accent-hover);
+  border-color: var(--nvidia-accent-hover);
   box-shadow: 0 4px 12px rgba(118, 185, 0, 0.35);
   transform: translateY(-1px);
 }
 
 .nemoclaw-key-save:active {
-  background: #5a8500;
-  border-color: #5a8500;
+  background: var(--nvidia-accent-active);
+  border-color: var(--nvidia-accent-active);
   transform: translateY(0);
 }
 
 .nemoclaw-key-save:focus-visible {
-  outline: 2px solid #76B900;
+  outline: 2px solid var(--nvidia-accent);
   outline-offset: 2px;
 }
 
@@ -1193,7 +1213,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-key-feedback--success {
-  color: #76B900;
+  color: var(--nvidia-accent);
   animation: nemoclaw-fade-in 200ms ease;
 }
 
@@ -1282,7 +1302,7 @@ body.nemoclaw-switching openclaw-app {
   display: flex;
   width: 18px;
   height: 18px;
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-loading__spinner svg {
@@ -1317,7 +1337,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-retry-btn:hover {
-  border-color: #76B900;
+  border-color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.06);
 }
 
@@ -1364,8 +1384,8 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-tabbar__tab--active {
-  color: #76B900;
-  border-bottom-color: #76B900;
+  color: var(--nvidia-accent);
+  border-bottom-color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-tabbar__count {
@@ -1379,7 +1399,7 @@ body.nemoclaw-switching openclaw-app {
   font-weight: 700;
   border-radius: 9999px;
   background: rgba(118, 185, 0, 0.12);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-tab-panel {
@@ -1504,7 +1524,7 @@ body.nemoclaw-switching openclaw-app {
   padding: 1px 5px;
   border-radius: 3px;
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 /* Badges */
@@ -1539,7 +1559,7 @@ body.nemoclaw-switching openclaw-app {
 .nemoclaw-policy-badge--editable {
   border: 1px solid rgba(118, 185, 0, 0.3);
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 /* Recommendations (from recent blocks — one-click approve) */
@@ -1604,7 +1624,7 @@ body.nemoclaw-switching openclaw-app {
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: #76B900;
+  background: var(--nvidia-accent);
   border: none;
   border-radius: var(--radius-sm, 6px);
   cursor: pointer;
@@ -1612,7 +1632,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-recommendations__approve-all:hover:not(:disabled) {
-  background: #6aa300;
+  background: var(--nvidia-accent-hover);
 }
 
 .nemoclaw-policy-recommendations__approve-all:disabled {
@@ -1693,7 +1713,7 @@ body.nemoclaw-switching openclaw-app {
   font-size: 13px;
   font-weight: 600;
   color: #fff;
-  background: #76B900;
+  background: var(--nvidia-accent);
   border: none;
   border-radius: var(--radius-sm, 6px);
   cursor: pointer;
@@ -1701,7 +1721,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-recommendation-card__approve:hover:not(:disabled) {
-  background: #6aa300;
+  background: var(--nvidia-accent-hover);
 }
 
 .nemoclaw-policy-recommendation-card__approve:disabled {
@@ -1768,7 +1788,7 @@ body.nemoclaw-switching openclaw-app {
   padding: 1px 5px;
   border-radius: 4px;
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 /* Immutable cards */
@@ -1904,7 +1924,7 @@ body.nemoclaw-switching openclaw-app {
 .nemoclaw-policy-path--rw {
   background: rgba(118, 185, 0, 0.06);
   border-color: rgba(118, 185, 0, 0.2);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 /* Network policy cards */
@@ -1972,7 +1992,7 @@ body.nemoclaw-switching openclaw-app {
 
 .nemoclaw-policy-netcard--expanded .nemoclaw-policy-netcard__chevron {
   transform: rotate(90deg);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-netcard__name {
@@ -2271,7 +2291,7 @@ body.nemoclaw-switching openclaw-app {
 
 .nemoclaw-policy-input:focus,
 .nemoclaw-policy-select:focus {
-  border-color: #76B900;
+  border-color: var(--nvidia-accent);
   box-shadow: 0 0 0 2px rgba(118, 185, 0, 0.15);
 }
 
@@ -2311,8 +2331,8 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-add-btn:hover {
-  border-color: #76B900;
-  color: #76B900;
+  border-color: var(--nvidia-accent);
+  color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.04);
 }
 
@@ -2343,8 +2363,8 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-add-small-btn:hover {
-  border-color: #76B900;
-  color: #76B900;
+  border-color: var(--nvidia-accent);
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-add-small-btn svg {
@@ -2360,23 +2380,26 @@ body.nemoclaw-switching openclaw-app {
 /* Save bar */
 
 .nemoclaw-policy-savebar {
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 18px;
-  margin-top: 24px;
+  padding: 16px 24px;
   border: 1px solid var(--border, #27272a);
-  border-radius: var(--radius-lg, 12px);
+  border-top-width: 2px;
+  border-radius: 0;
   background: var(--card, #181b22);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.35);
 }
 
 :root[data-theme="light"] .nemoclaw-policy-savebar {
   background: #fff;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
 }
 
 .nemoclaw-policy-savebar__info {
@@ -2395,7 +2418,7 @@ body.nemoclaw-switching openclaw-app {
   padding: 1px 4px;
   border-radius: 3px;
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-savebar__info-icon {
@@ -2429,9 +2452,9 @@ body.nemoclaw-switching openclaw-app {
   align-items: center;
   gap: 6px;
   padding: 9px 22px;
-  border: 1px solid #76B900;
+  border: 1px solid var(--nvidia-accent);
   border-radius: var(--radius-md, 8px);
-  background: #76B900;
+  background: var(--nvidia-accent);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -2442,15 +2465,15 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-save-btn:hover {
-  background: #6aa300;
-  border-color: #6aa300;
+  background: var(--nvidia-accent-hover);
+  border-color: var(--nvidia-accent-hover);
   box-shadow: 0 4px 12px rgba(118, 185, 0, 0.35);
   transform: translateY(-1px);
 }
 
 .nemoclaw-policy-save-btn:active {
-  background: #5a8500;
-  border-color: #5a8500;
+  background: var(--nvidia-accent-active);
+  border-color: var(--nvidia-accent-active);
   transform: translateY(0);
 }
 
@@ -2462,7 +2485,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-save-btn:focus-visible {
-  outline: 2px solid #76B900;
+  outline: 2px solid var(--nvidia-accent);
   outline-offset: 2px;
 }
 
@@ -2479,11 +2502,11 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-savebar__feedback--saving {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-savebar__feedback--success {
-  color: #76B900;
+  color: var(--nvidia-accent);
   animation: nemoclaw-fade-in 200ms ease;
 }
 
@@ -2606,7 +2629,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-enf-pill--enforce {
-  color: #76B900;
+  color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.1);
   border: 1px solid rgba(118, 185, 0, 0.25);
 }
@@ -2743,7 +2766,7 @@ body.nemoclaw-switching openclaw-app {
 
 .nemoclaw-policy-confirm-btn--create {
   background: rgba(118, 185, 0, 0.12);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-confirm-btn--create:hover {
@@ -2844,7 +2867,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-ep-advanced-toggle:hover {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-policy-ep-advanced-toggle__chevron {
@@ -2869,7 +2892,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-ep-advanced-toggle--open {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 /* ===========================================
@@ -2920,7 +2943,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-policy-search:focus {
-  border-color: #76B900;
+  border-color: var(--nvidia-accent);
   width: 240px;
 }
 
@@ -2946,7 +2969,7 @@ body.nemoclaw-switching openclaw-app {
   padding: 0 6px;
   border-radius: var(--radius-full, 9999px);
   background: rgba(118, 185, 0, 0.12);
-  color: #76B900;
+  color: var(--nvidia-accent);
   font-size: 11px;
   font-weight: 700;
 }
@@ -3085,9 +3108,15 @@ body.nemoclaw-switching openclaw-app {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Reserve space so content is not hidden behind the fixed bar */
+.nemoclaw-inference-page:has(.nemoclaw-policy-savebar--visible),
+.nemoclaw-policy-page:has(.nemoclaw-policy-savebar--visible) {
+  padding-bottom: 80px;
+}
+
 .nemoclaw-policy-savebar__summary {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text, #e4e4e7);
   display: block;
 }
@@ -3171,7 +3200,7 @@ body.nemoclaw-switching openclaw-app {
   border-radius: 6px;
   background: rgba(118, 185, 0, 0.08);
   border: 1px solid rgba(118, 185, 0, 0.2);
-  color: #76B900;
+  color: var(--nvidia-accent);
   white-space: nowrap;
 }
 
@@ -3210,7 +3239,7 @@ body.nemoclaw-switching openclaw-app {
 .nc-gateway-strip__help:hover,
 .nc-gateway-strip__help--active {
   background: var(--bg-hover, #262a35);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nc-gateway-strip__help svg {
@@ -3258,7 +3287,7 @@ body.nemoclaw-switching openclaw-app {
   padding: 1px 5px;
   border-radius: 3px;
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nc-gateway-tooltip__arrow {
@@ -3331,7 +3360,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-inference-apikeys__link:hover {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nemoclaw-inference-apikeys__form.nemoclaw-key-form {
@@ -3395,7 +3424,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-inference-apikeys__add-form .nemoclaw-policy-confirm-btn--create {
-  background: #76B900;
+  background: var(--nvidia-accent);
   color: #0c0c0d;
 }
 
@@ -3509,7 +3538,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nc-quick-picker__add-btn:hover {
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nc-quick-picker__add-form {
@@ -3548,7 +3577,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nc-upgrade-banner__link {
-  color: #76B900;
+  color: var(--nvidia-accent);
   font-weight: 500;
   text-decoration: none;
 }
@@ -3632,7 +3661,7 @@ body.nemoclaw-switching openclaw-app {
 
 .nc-partner-tile__add {
   font-size: 11px;
-  color: #76B900;
+  color: var(--nvidia-accent);
   font-weight: 600;
 }
 
@@ -3830,7 +3859,7 @@ body.nemoclaw-switching openclaw-app {
 
 .nc-providers-section--expanded .nc-providers-section__chevron {
   transform: rotate(90deg);
-  color: #76B900;
+  color: var(--nvidia-accent);
 }
 
 .nc-providers-section__title {
@@ -3868,7 +3897,7 @@ body.nemoclaw-switching openclaw-app {
 }
 .nemoclaw-inference-type-pill--openai { border-color: #10a37f; color: #10a37f; }
 .nemoclaw-inference-type-pill--anthropic { border-color: #d97706; color: #d97706; }
-.nemoclaw-inference-type-pill--nvidia { border-color: #76b900; color: #76b900; }
+.nemoclaw-inference-type-pill--nvidia { border-color: var(--nvidia-accent); color: var(--nvidia-accent); }
 .nemoclaw-inference-type-pill--generic { border-color: #6b7280; color: #6b7280; }
 
 /* --- Status Dots --- */
@@ -4157,7 +4186,7 @@ body.nemoclaw-switching openclaw-app {
 }
 .nemoclaw-inference-proto-row__method {
   font-weight: 600;
-  color: var(--accent, #76b900);
+  color: var(--accent, var(--nvidia-accent));
   min-width: 40px;
 }
 .nemoclaw-inference-proto-row__path {
@@ -4257,15 +4286,15 @@ body.nemoclaw-switching openclaw-app {
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 4px;
-  border: 1px solid var(--accent, #76b900);
+  border: 1px solid var(--accent, var(--nvidia-accent));
   background: transparent;
-  color: var(--accent, #76b900);
+  color: var(--accent, var(--nvidia-accent));
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
 }
 .nemoclaw-inference-activate-btn:hover {
-  background: var(--accent, #76b900);
+  background: var(--accent, var(--nvidia-accent));
   color: #fff;
 }
 .nemoclaw-inference-activate-btn--current {
@@ -4341,7 +4370,7 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-inference-empty-tile:hover {
-  border-color: #76B900;
+  border-color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.04);
   box-shadow: 0 0 0 1px rgba(118, 185, 0, 0.15);
 }
@@ -4361,7 +4390,7 @@ body.nemoclaw-switching openclaw-app {
   padding: 1px 6px;
   border-radius: 3px;
   background: rgba(118, 185, 0, 0.08);
-  color: #76B900;
+  color: var(--nvidia-accent);
   width: fit-content;
 }
 
@@ -4446,6 +4475,6 @@ body.nemoclaw-switching openclaw-app {
 }
 
 .nemoclaw-model-dropdown__route-link:hover {
-  color: #76B900;
+  color: var(--nvidia-accent);
   background: rgba(118, 185, 0, 0.06);
 }
