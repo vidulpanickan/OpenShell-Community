@@ -214,9 +214,19 @@ wait_for_tcp_port() {
 }
 
 derive_chat_ui_url() {
+  local env_id=""
+
   if [[ -n "${CHAT_UI_URL:-}" ]]; then
     printf '%s\n' "$CHAT_UI_URL"
     return
+  fi
+
+  if [[ -n "${VSCODE_PROXY_URI:-}" ]]; then
+    env_id="$(printf '%s\n' "$VSCODE_PROXY_URI" | sed -E 's#.*code-server[0-9]+-([^.]+)\.brevlab\.com.*#\1#')"
+    if [[ -n "$env_id" && "$env_id" != "$VSCODE_PROXY_URI" ]]; then
+      printf 'https://openclaw-%s.brevlab.com\n' "$env_id"
+      return
+    fi
   fi
 
   if [[ -n "${BREV_ENV_ID:-}" ]]; then
