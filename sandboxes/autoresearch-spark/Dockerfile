@@ -14,6 +14,12 @@
 # ---------------------------------------------------------------------------
 # Stage 1: System base
 # ---------------------------------------------------------------------------
+
+# This image uses its own CUDA base (not the community base) because the
+# GB10 / Blackwell GPU requires CUDA 13.0 devel for sm_121a ptxas support.
+# The ARG is declared so the CI sandbox-build workflow can parse it, but
+# it is intentionally unused — the FROM below pins the CUDA image directly.
+ARG BASE_IMAGE=nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04 AS system
 
 ENV DEBIAN_FRONTEND=noninteractive \
