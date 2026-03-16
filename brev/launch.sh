@@ -33,7 +33,7 @@ CLI_RETRY_DELAY_SECS="${CLI_RETRY_DELAY_SECS:-3}"
 GHCR_LOGIN="${GHCR_LOGIN:-auto}"
 GHCR_USER="${GHCR_USER:-}"
 DEFAULT_INFERENCE_PROVIDER="${DEFAULT_INFERENCE_PROVIDER:-nvidia-endpoints}"
-DEFAULT_INFERENCE_MODEL="${DEFAULT_INFERENCE_MODEL:-moonshotai/kimi-k2.5}"
+DEFAULT_INFERENCE_MODEL="${DEFAULT_INFERENCE_MODEL:-nvidia/nemotron-3-super-120b-a12b}"
 DEFAULT_NEMOCLAW_IMAGE="ghcr.io/nvidia/openshell-community/sandboxes/openclaw-nvidia:latest"
   if [[ -n "${NEMOCLAW_IMAGE+x}" ]]; then
     NEMOCLAW_IMAGE_EXPLICIT=1
@@ -742,7 +742,8 @@ install_cli_from_release() {
       --credential NVIDIA_API_KEY=unused \
       --config NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 
-    set_inference_route
+    # Disabling since this should get set by welcome UI
+    #set_inference_route
 
     step "Installing welcome UI dependencies"
     install_ui_deps
