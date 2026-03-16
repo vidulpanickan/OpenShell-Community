@@ -438,24 +438,36 @@ body {
   background: rgba(118, 185, 0, 0.12);
 }
 
-/* Base: all logos same rendered size, clamp intrinsic dimensions */
-.provider-picker__logo {
-  display: block;
+/* Logo wrapper: fixed-size container so intrinsic image size cannot affect layout (root cause fix) */
+.provider-picker__logo-wrap {
+  display: inline-flex;
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+.provider-picker__logo-wrap--nvidia {
+  width: 32px;
+  height: 32px;
+}
+
+.provider-picker__logo {
+  width: 100%;
+  height: 100%;
+  display: block;
   object-fit: contain;
   object-position: center;
   box-sizing: border-box;
 }
 
-/* NVIDIA row: same visual size as partner logos for consistency */
-.provider-picker__nvidia-row .provider-picker__logo,
-.provider-picker__logo--nvidia {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  max-width: 32px;
-  max-height: 32px;
+/* Override any intrinsic size: image must fit inside wrapper */
+.provider-picker__logo-wrap .provider-picker__logo {
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .provider-picker__nvidia-row .provider-picker__name {
@@ -506,13 +518,9 @@ body {
   background: var(--bg-card-hover);
 }
 
-.provider-picker__tile .provider-picker__logo {
+.provider-picker__tile .provider-picker__logo-wrap {
   width: 32px;
   height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  max-width: 32px;
-  max-height: 32px;
 }
 
 .provider-picker__tile .provider-picker__name {

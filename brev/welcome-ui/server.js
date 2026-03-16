@@ -642,7 +642,7 @@ function renderInferenceProviderPickerAndInstructions() {
   pickerParts.push('<div id="install-provider-picker" class="provider-picker">');
   pickerParts.push('<p class="provider-picker__heading">Choose your endpoint provider</p>');
   pickerParts.push('<div class="provider-picker__nvidia-row" data-provider-id="nvidia" role="button" tabindex="0">');
-  pickerParts.push(`<img class="provider-picker__logo provider-picker__logo--nvidia" src="/ncp-logos/${nvidiaLogo}" alt="" width="32" height="32">`);
+  pickerParts.push(`<span class="provider-picker__logo-wrap provider-picker__logo-wrap--nvidia"><img class="provider-picker__logo provider-picker__logo--nvidia" src="/ncp-logos/${nvidiaLogo}" alt="" width="32" height="32"></span>`);
   pickerParts.push(`<span class="provider-picker__name">${nvidiaName}</span>`);
   pickerParts.push('<span class="provider-picker__badge provider-picker__badge--free">Free trial. Rate limited.</span>');
   pickerParts.push("</div>");
@@ -653,7 +653,7 @@ function renderInferenceProviderPickerAndInstructions() {
     const name = escapeHtml(p.name || p.id || "");
     const logoFile = escapeHtml(p.logoFile || "generic");
     pickerParts.push(`<div class="provider-picker__tile" data-provider-id="${id}" role="button" tabindex="0">`);
-    pickerParts.push(`<img class="provider-picker__logo" src="/ncp-logos/${logoFile}" alt="" width="32" height="32">`);
+    pickerParts.push(`<span class="provider-picker__logo-wrap"><img class="provider-picker__logo" src="/ncp-logos/${logoFile}" alt="" width="32" height="32"></span>`);
     pickerParts.push(`<span class="provider-picker__name">${name}</span>`);
     pickerParts.push("</div>");
   });
