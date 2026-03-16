@@ -575,7 +575,7 @@ install_code_server() {
 configure_code_server() {
   local config_dir settings_dir settings_user_dir workspaces_dir workspace_path home_workspace_path
   local terminals_target
-  local chat_ui_url install_cmd install_log auth_export terminal_name terminal_desc
+  local chat_ui_url install_cmd auth_export terminal_name terminal_desc
   local wrapper_cmd fallback_cmd run_once_marker wrapper_script
 
   config_dir="$TARGET_HOME/.config/code-server"
@@ -586,21 +586,20 @@ configure_code_server() {
   home_workspace_path="$TARGET_HOME/nemoclaw-plugin.code-workspace"
   terminals_target="$TARGET_HOME/.vscode/terminals.json"
   chat_ui_url="$(derive_chat_ui_url)"
-  install_log="/tmp/nemoclaw-plugin-install.log"
   run_once_marker="$TARGET_HOME/.cache/nemoclaw-plugin/install-ran"
   wrapper_script="${ASSET_DIR}/run-plugin-install.sh"
   auth_export=""
   if [[ -n "$OPENCLAW_AUTH_MODE" ]]; then
     auth_export=" export OPENCLAW_AUTH_MODE=\"${OPENCLAW_AUTH_MODE}\" &&"
   fi
-  wrapper_cmd="mkdir -p \"${TARGET_HOME}/.cache/nemoclaw-plugin\" && if [[ -f \"${run_once_marker}\" ]]; then printf 'NeMoClaw install autorun already ran. Opening a fresh login shell.\\n\\n'; source ~/.profile >/dev/null 2>&1 || true; source ~/.bashrc >/dev/null 2>&1 || true; exec bash -il; fi; cd ${PLUGIN_DIR} && export CHAT_UI_URL=\"${chat_ui_url}\" && export INSTALL_LOG=\"${install_log}\" && export PLUGIN_DIR=\"${PLUGIN_DIR}\" && export RUN_ONCE_MARKER=\"${run_once_marker}\" &&${auth_export} bash \"${wrapper_script}\""
+  wrapper_cmd="mkdir -p \"${TARGET_HOME}/.cache/nemoclaw-plugin\" && if [[ -f \"${run_once_marker}\" ]]; then printf 'NeMoClaw install autorun already ran. Opening a fresh login shell.\\n\\n'; source ~/.profile >/dev/null 2>&1 || true; source ~/.bashrc >/dev/null 2>&1 || true; exec bash -il; fi; cd ${PLUGIN_DIR} && export CHAT_UI_URL=\"${chat_ui_url}\" && export PLUGIN_DIR=\"${PLUGIN_DIR}\" && export RUN_ONCE_MARKER=\"${run_once_marker}\" &&${auth_export} bash \"${wrapper_script}\""
   install_cmd="${wrapper_cmd}"
   terminal_name="nemoclaw-install"
   terminal_desc="NemoClaw install"
   if [[ "$PLUGIN_INSTALL_READY" != "1" ]]; then
     terminal_name="nemoclaw-install-manual"
     terminal_desc="NemoClaw install command"
-    fallback_cmd="export CHAT_UI_URL=\"${chat_ui_url}\" && export INSTALL_LOG=\"${install_log}\" && export PLUGIN_DIR=\"${PLUGIN_DIR}\" && export RUN_ONCE_MARKER=\"${run_once_marker}\" && export PRINT_ONLY=1 &&${auth_export} bash \"${wrapper_script}\""
+    fallback_cmd="export CHAT_UI_URL=\"${chat_ui_url}\" && export PLUGIN_DIR=\"${PLUGIN_DIR}\" && export RUN_ONCE_MARKER=\"${run_once_marker}\" && export PRINT_ONLY=1 &&${auth_export} bash \"${wrapper_script}\""
     install_cmd="${fallback_cmd}"
   fi
 
