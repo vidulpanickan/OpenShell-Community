@@ -21,11 +21,11 @@ GIT_HTTP_USER="${GIT_HTTP_USER:-${GHCR_USER:-x-access-token}}"
 COMMUNITY_REPO="${COMMUNITY_REPO:-NVIDIA/OpenShell-Community}"
 COMMUNITY_REF="${COMMUNITY_REF:-${COMMUNITY_BRANCH:-main}}"
 COMMUNITY_CLONE_ROOT="${COMMUNITY_CLONE_ROOT:-}"
-COMMUNITY_DIR="${COMMUNITY_DIR:-$COMMUNITY_CLONE_ROOT/OpenShell-Community}"
+COMMUNITY_DIR="${COMMUNITY_DIR:-}"
 PLUGIN_REPO="${PLUGIN_REPO:-NVIDIA/openshell-openclaw-plugin}"
 PLUGIN_REF="${PLUGIN_REF:-main}"
 PLUGIN_CLONE_ROOT="${PLUGIN_CLONE_ROOT:-}"
-PLUGIN_DIR="${PLUGIN_DIR:-$PLUGIN_CLONE_ROOT/openshell-openclaw-plugin}"
+PLUGIN_DIR="${PLUGIN_DIR:-}"
 CLI_BIN="${CLI_BIN:-openshell}"
 CLI_RELEASE_TAG="${CLI_RELEASE_TAG:-devel}"
 OPENCLAW_VERSION="${OPENCLAW_VERSION:-latest}"
@@ -41,10 +41,10 @@ fi
 if [[ -z "$PLUGIN_CLONE_ROOT" ]]; then
   PLUGIN_CLONE_ROOT="$TARGET_HOME"
 fi
-if [[ -z "${COMMUNITY_DIR:-}" ]]; then
+if [[ -z "$COMMUNITY_DIR" ]]; then
   COMMUNITY_DIR="$COMMUNITY_CLONE_ROOT/OpenShell-Community"
 fi
-if [[ -z "${PLUGIN_DIR:-}" ]]; then
+if [[ -z "$PLUGIN_DIR" ]]; then
   PLUGIN_DIR="$PLUGIN_CLONE_ROOT/openshell-openclaw-plugin"
 fi
 NODE_BIN="${NODE_BIN:-}"
