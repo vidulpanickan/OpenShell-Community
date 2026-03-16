@@ -480,37 +480,45 @@
     if (backPartner) showInstallScreen("picker");
   });
 
-  const installBody = $("#install-body");
-  if (installBody) {
-    installBody.addEventListener("click", (e) => {
-      const tile = e.target.closest("[data-provider-id]");
-      if (!tile) return;
-      const id = tile.getAttribute("data-provider-id");
-      if (!id) return;
-      e.preventDefault();
-      if (id === "nvidia") {
-        showInstallScreen("nvidia");
-        apiKeyInput.focus();
-        if (!installTriggered && !installFailed) triggerInstall();
-      } else {
-        showInstallScreen("partner", id);
-      }
-    });
-    installBody.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const tile = e.target.closest("[data-provider-id]");
-      if (!tile) return;
-      const id = tile.getAttribute("data-provider-id");
-      if (!id) return;
-      e.preventDefault();
-      if (id === "nvidia") {
-        showInstallScreen("nvidia");
-        apiKeyInput.focus();
-        if (!installTriggered && !installFailed) triggerInstall();
-      } else {
-        showInstallScreen("partner", id);
-      }
-    });
+  function handleProviderChoice(id) {
+    if (id === "nvidia") {
+      showInstallScreen("nvidia");
+      apiKeyInput.focus();
+      if (!installTriggered && !installFailed) triggerInstall();
+    } else {
+      showInstallScreen("partner", id);
+    }
+  }
+
+  function onProviderPickerClick(e) {
+    const tile = e.target.closest("[data-provider-id]");
+    if (!tile) return;
+    const id = tile.getAttribute("data-provider-id");
+    if (!id) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleProviderChoice(id);
+  }
+
+  function onProviderPickerKeydown(e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const tile = e.target.closest("[data-provider-id]");
+    if (!tile) return;
+    const id = tile.getAttribute("data-provider-id");
+    if (!id) return;
+    e.preventDefault();
+    handleProviderChoice(id);
+  }
+
+  if (installProviderPicker) {
+    installProviderPicker.addEventListener("click", onProviderPickerClick);
+    installProviderPicker.addEventListener("keydown", onProviderPickerKeydown);
+  } else {
+    const installBody = $("#install-body");
+    if (installBody) {
+      installBody.addEventListener("click", onProviderPickerClick);
+      installBody.addEventListener("keydown", onProviderPickerKeydown);
+    }
   }
 
   closeOnBackdrop(overlayInstall);
