@@ -22,9 +22,42 @@ for the complete security architecture.
 
 ## Prerequisites
 
-- [OpenShell](https://github.com/nvidia/openshell) installed and running
-- Docker running
-- At least one inference provider API key (NVIDIA, Anthropic, or OpenAI)
+### Install Docker
+
+Docker must be running before you start. If you don't have it:
+
+- **Mac**: Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start the app
+- **Linux**: `curl -fsSL https://get.docker.com | sh && sudo systemctl start docker`
+
+Verify it's running: `docker info`
+
+### Install OpenShell
+
+```bash
+# Recommended (downloads the binary directly):
+curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh
+
+# Or via pip (requires uv):
+uv tool install -U openshell
+```
+
+Verify it's installed: `openshell --version`
+
+On first use, OpenShell automatically creates a local gateway (K3s cluster in Docker).
+This takes a minute or two the first time.
+
+### Get an inference provider API key
+
+You need at least one API key to power the AI agent. Pick one:
+
+| Provider | How to get a key | Environment variable |
+|----------|-----------------|---------------------|
+| **NVIDIA** | Go to https://build.nvidia.com → sign in → API Key | `NVIDIA_API_KEY` |
+| **Anthropic (Claude)** | Go to https://console.anthropic.com → API Keys → Create Key | `ANTHROPIC_API_KEY` |
+| **OpenAI (ChatGPT)** | Go to https://platform.openai.com/api-keys → Create new secret key | `OPENAI_API_KEY` |
+
+You can use any combination of these. You can also switch between them at any time
+after the sandbox is running (see [Switching Inference Providers](#switching-inference-providers)).
 
 ## Quick Start
 
@@ -61,27 +94,22 @@ openshell sandbox create --name medical \
     --forward 18789 \
     -- env CHAT_UI_URL=http://127.0.0.1:18789 \
            NVIDIA_INFERENCE_API_KEY="${NVIDIA_API_KEY}" \
-           medical-start
-```
-
-### 3. (Optional) Connect Telegram or Discord
-
-The sandbox includes messaging bridges that let users chat with the agent from
-Telegram or Discord. Pass the bot token(s) as environment variables when creating
-the sandbox:
-
-```bash
-openshell sandbox create --name medical \
-    --from openclaw-medical \
-    --forward 18789 \
-    -- env CHAT_UI_URL=http://127.0.0.1:18789 \
-           NVIDIA_INFERENCE_API_KEY="${NVIDIA_API_KEY}" \
            TELEGRAM_BOT_TOKEN="your-telegram-token" \
            DISCORD_BOT_TOKEN="your-discord-token" \
            medical-start
 ```
 
-Only include the tokens for the bridges you want. The bridges start automatically.
+The Telegram and Discord tokens are optional — just remove the lines if you don't
+have them yet. The sandbox works fine without any messaging bridges. You can add
+them later without recreating the sandbox — just connect and start the bridge:
+
+```bash
+openshell sandbox connect medical
+
+# Inside the sandbox:
+export TELEGRAM_BOT_TOKEN="your-token"
+/sandbox/.venv/bin/python /sandbox/bridges/telegram-bridge.py &
+```
 
 For step-by-step instructions on creating the bots and getting tokens, see
 **[MESSAGING_SETUP.md](MESSAGING_SETUP.md)**.

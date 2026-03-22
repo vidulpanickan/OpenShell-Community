@@ -147,3 +147,35 @@ cat /tmp/discord-bridge.log
 - Make sure **Message Content Intent** is enabled in the Discord Developer Portal
 - Make sure you're mentioning the bot (`@BotName`) or DMing it — it doesn't read every message
 - Check that the bot has "Read Messages" and "Send Messages" permissions in the channel
+
+---
+
+## Adding Bridges to a Running Sandbox
+
+You don't need to recreate the sandbox to add messaging. Connect to it and start
+the bridge manually:
+
+**Telegram:**
+
+```bash
+openshell sandbox connect medical
+
+# Inside the sandbox:
+export TELEGRAM_BOT_TOKEN="7123456789:AAHxYourTokenHere"
+export ALLOWED_CHAT_IDS="123456789"   # optional
+/sandbox/.venv/bin/python /sandbox/bridges/telegram-bridge.py &
+```
+
+**Discord:**
+
+```bash
+openshell sandbox connect medical
+
+# Inside the sandbox:
+export DISCORD_BOT_TOKEN="MTIzNDU2Nzg5.YourTokenHere"
+export DISCORD_CHANNEL_IDS="1234567890"   # optional
+/sandbox/.venv/bin/python /sandbox/bridges/discord-bridge.py &
+```
+
+The `&` runs the bridge in the background so you can keep using the shell. Logs go
+to `/tmp/telegram-bridge.log` and `/tmp/discord-bridge.log`.
