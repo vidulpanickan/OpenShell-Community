@@ -1,0 +1,250 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# openclaw-medical sandbox policy
+#
+# Forked from openclaw-nvidia/policy.yaml. Adds messaging (Telegram, Discord),
+# HuggingFace, and PyPI policies with scoped Python binary access.
+#
+# SECURITY: /usr/bin/node (the agent runtime) is NOT granted access to any
+# external API endpoint. All LLM inference goes through inference.local routing.
+# See workflow_readme.md for the full security rationale.
+
+version: 1
+
+# --- Sandbox setup configuration (queried once at startup, immutable) ---
+
+filesystem_policy:
+  include_workdir: true
+  read_only:
+    - /usr
+    - /lib
+    - /proc
+    - /dev/urandom
+    - /app
+    - /etc
+    - /var/log
+  read_write:
+    - /sandbox
+    - /tmp
+    - /dev/null
+
+landlock:
+  compatibility: best_effort
+
+process:
+  run_as_user: sandbox
+  run_as_group: sandbox
+
+# --- Network policies (queried per-CONNECT request) ---
+#
+# Each named policy maps a set of allowed (binary, endpoint) pairs.
+# Binary identity is resolved via /proc/net/tcp inode lookup + /proc/{pid}/exe.
+# Ancestors (/proc/{pid}/status PPid walk) and cmdline paths are also matched.
+# SHA256 integrity is enforced in Rust via trust-on-first-use, not here.
+
+network_policies:
+
+  # ──────────────────────────────────────────────────────────────────
+  # Inherited from openclaw-nvidia (unchanged)
+  # ──────────────────────────────────────────────────────────────────
+
+  allow_navigator_navigator_svc_cluster_local_8080:
+    name: allow_navigator_navigator_svc_cluster_local_8080
+    endpoints:
+    - host: navigator.navigator.svc.cluster.local
+      port: 8080
+    binaries:
+    - path: /usr/bin/node
+  allow_registry_npmjs_org_443:
+    name: allow_registry_npmjs_org_443
+    endpoints:
+    - host: registry.npmjs.org
+      port: 443
+    binaries:
+    - path: /usr/bin/node
+  claude_code:
+    name: claude_code
+    endpoints:
+      - { host: api.anthropic.com, port: 443, protocol: rest, enforcement: enforce, access: full, tls: terminate }
+      - { host: statsig.anthropic.com, port: 443 }
+      - { host: sentry.io, port: 443 }
+      - { host: raw.githubusercontent.com, port: 443 }
+      - { host: platform.claude.com, port: 443 }
+    binaries:
+      - { path: /usr/local/bin/claude }
+      - { path: /usr/bin/node }
+  gitlab:
+    name: gitlab
+    endpoints:
+      - { host: gitlab.com, port: 443 }
+      - { host: gitlab.mycorp.com, port: 443 }
+    binaries:
+      - { path: /usr/bin/glab }
+  github:
+    name: github
+    endpoints:
+      - host: github.com
+        port: 443
+        protocol: rest
+        tls: terminate
+        enforcement: enforce
+        rules:
+          - allow:
+              method: GET
+              path: "/**/info/refs*"
+          - allow:
+              method: POST
+              path: "/**/git-upload-pack"
+    binaries:
+      - { path: /usr/bin/git }
+
+  # NVIDIA API: curl, bash, opencode, python3 ONLY. NOT node.
+  # Agent code must use inference.local for LLM calls.
+  nvidia:
+    name: nvidia
+    endpoints:
+      - { host: integrate.api.nvidia.com, port: 443 }
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: /bin/bash }
+      - { path: /usr/local/bin/opencode }
+      - { path: /usr/bin/python3 }
+      - { path: /usr/bin/python3.12 }
+  nvidia_web:
+    name: nvidia_web
+    endpoints:
+      - { host: nvidia.com, port: 443 }
+      - { host: www.nvidia.com, port: 443 }
+    binaries:
+      - { path: /usr/bin/curl }
+
+  github_rest_api:
+    name: github-rest-api
+    endpoints:
+      - host: api.github.com
+        port: 443
+        protocol: rest
+        tls: terminate
+        enforcement: enforce
+        rules:
+          - allow:
+              method: GET
+              path: "/**"
+          - allow:
+              method: HEAD
+              path: "/**"
+          - allow:
+              method: OPTIONS
+              path: "/**"
+    binaries:
+      - { path: /usr/local/bin/claude }
+      - { path: /usr/bin/gh }
+
+  # ──────────────────────────────────────────────────────────────────
+  # NEW: Telegram Bot API (for Python messaging bridge)
+  # ──────────────────────────────────────────────────────────────────
+
+  telegram_bot:
+    name: telegram_bot
+    endpoints:
+      - host: api.telegram.org
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/bot*/**" }
+          - allow: { method: POST, path: "/bot*/**" }
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: "/sandbox/.venv/bin/python*" }
+
+  # ──────────────────────────────────────────────────────────────────
+  # NEW: Discord API, Gateway, and CDN (for Python messaging bridge)
+  # ──────────────────────────────────────────────────────────────────
+
+  discord:
+    name: discord
+    endpoints:
+      - host: discord.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+      - host: gateway.discord.gg
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+      - host: cdn.discordapp.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: "/sandbox/.venv/bin/python*" }
+
+  # ──────────────────────────────────────────────────────────────────
+  # NEW: Hugging Face Hub, LFS, and Inference API (runtime model downloads)
+  # ──────────────────────────────────────────────────────────────────
+
+  huggingface:
+    name: huggingface
+    endpoints:
+      - host: huggingface.co
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+      - host: cdn-lfs.huggingface.co
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+      - host: cdn-lfs-us-1.huggingface.co
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+      - host: api-inference.huggingface.co
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+    binaries:
+      - { path: "/sandbox/.venv/bin/python*" }
+      - { path: /usr/local/bin/uv }
+      - { path: /usr/bin/curl }
+
+  # ──────────────────────────────────────────────────────────────────
+  # NEW: PyPI (runtime Python package installs)
+  # ──────────────────────────────────────────────────────────────────
+
+  pypi:
+    name: pypi
+    endpoints:
+      - { host: pypi.org, port: 443 }
+      - { host: files.pythonhosted.org, port: 443 }
+    binaries:
+      - { path: "/sandbox/.venv/bin/python*" }
+      - { path: /usr/local/bin/uv }
