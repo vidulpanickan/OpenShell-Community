@@ -210,6 +210,7 @@ network_policies:
         tls: terminate
         rules:
           - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
           - allow: { method: POST, path: "/**" }
       - host: cdn-lfs.huggingface.co
         port: 443
@@ -218,6 +219,7 @@ network_policies:
         tls: terminate
         rules:
           - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
       - host: cdn-lfs-us-1.huggingface.co
         port: 443
         protocol: rest
@@ -225,6 +227,7 @@ network_policies:
         tls: terminate
         rules:
           - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
       - host: api-inference.huggingface.co
         port: 443
         protocol: rest
@@ -232,6 +235,7 @@ network_policies:
         tls: terminate
         rules:
           - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
           - allow: { method: POST, path: "/**" }
     binaries:
       - { path: "/sandbox/.venv/bin/python*" }
