@@ -45,6 +45,12 @@ fi
 #   - Starts the OpenClaw gateway on port 18788
 #   - Starts the policy-proxy on port 18789
 #   - Outputs the chat UI URL
+# ── Kill stale processes from previous runs ────────────────────────
+# Prevents token mismatch when medical-start is invoked multiple times.
+pkill -f "openclaw gateway" 2>/dev/null || true
+pkill -f "policy-proxy" 2>/dev/null || true
+sleep 1
+
 echo "[medical-sandbox] Starting OpenClaw gateway and inference routing..."
 # Temporarily disable set -e — openclaw-nvidia-start has expected failures
 # (e.g., API key injection under Landlock) that should not abort the entrypoint.
@@ -72,5 +78,6 @@ echo ""
 echo "[medical-sandbox] Ready."
 echo "  Models:   /sandbox/models/"
 echo "  Database: /sandbox/data/medical.db"
-echo "  Bridges:  ${TELEGRAM_BOT_TOKEN:+telegram }${DISCORD_BOT_TOKEN:+discord }${TELEGRAM_BOT_TOKEN:-${DISCORD_BOT_TOKEN:-none}}"
+_bridges="${TELEGRAM_BOT_TOKEN:+telegram }${DISCORD_BOT_TOKEN:+discord }"
+echo "  Bridges:  ${_bridges:-none}"
 echo ""

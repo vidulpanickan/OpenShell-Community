@@ -34,6 +34,12 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends sqlite3 && \
     rm -rf /var/lib/apt/lists/*
 
+# ── Upgrade OpenClaw to v2026.3.13 ─────────────────────────────────
+# v2026.3.11 (parent image) has a bug where dangerouslyDisableDeviceAuth
+# is silently ignored (upstream issue #44485). v2026.3.13 fixes this bug
+# and patches 3 security vulnerabilities (GHSA-rchv, GHSA-6mgf, GHSA-5wcw).
+RUN npm install -g openclaw@2026.3.13
+
 # ── Python ML and messaging dependencies ─────────────────────────────
 # Install into the existing /sandbox/.venv from the base image.
 # Using CPU-only torch to keep image size manageable.
