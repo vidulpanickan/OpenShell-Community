@@ -81,7 +81,14 @@ after the sandbox is running (see [Switching Inference Providers](#switching-inf
 
 ## Quick Start
 
-### 1. Create a provider and configure inference
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/vidulpanickan/OpenShell-Community.git
+cd OpenShell-Community/sandboxes/openclaw-medical
+```
+
+### 2. Create a provider and configure inference
 
 ```bash
 # Example: use NVIDIA
@@ -100,17 +107,12 @@ openshell provider create --name openai --type openai --from-existing
 openshell inference set --provider openai --model gpt-4o
 ```
 
-### 2. Build and create the sandbox
+### 3. Create the sandbox
 
 ```bash
-cd sandboxes/openclaw-medical
-
-# Build the image
-docker build -t openclaw-medical .
-
-# Create the sandbox
+# OpenShell builds the image and loads it automatically
 openshell sandbox create --name medical \
-    --from openclaw-medical \
+    --from ./ \
     --forward 18789 \
     -- env CHAT_UI_URL=http://127.0.0.1:18789 \
            NVIDIA_INFERENCE_API_KEY="${NVIDIA_API_KEY}" \
