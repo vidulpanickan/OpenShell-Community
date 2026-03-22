@@ -11,6 +11,12 @@ TLS connections.
 """
 
 import os
+
+# Disable Xet storage protocol — it uses a chunked content-addressable
+# transfer mechanism that is incompatible with OpenShell's TLS-terminating
+# HTTP CONNECT proxy, causing downloads to crawl at ~77 B/s.
+os.environ["HF_HUB_ENABLE_XET"] = "0"
+
 from huggingface_hub import snapshot_download
 
 MODELS_DIR = "/sandbox/models"
