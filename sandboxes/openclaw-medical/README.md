@@ -34,11 +34,14 @@ Verify it's running: `docker info`
 ### Install OpenShell
 
 ```bash
-# Recommended (downloads the binary directly):
 curl -LsSf https://raw.githubusercontent.com/NVIDIA/OpenShell/main/install.sh | sh
+```
 
-# Or via pip (requires uv):
-uv tool install -U openshell
+If you see a message saying the install path is not on your PATH, run:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc   # or ~/.zshrc on Mac
 ```
 
 Verify it's installed: `openshell --version`
