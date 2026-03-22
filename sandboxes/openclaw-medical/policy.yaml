@@ -110,6 +110,7 @@ network_policies:
       - { path: /bin/bash }
       - { path: /usr/local/bin/opencode }
       - { path: /usr/bin/python3 }
+      - { path: /usr/bin/python3.12 }
   nvidia_web:
     name: nvidia_web
     endpoints:
