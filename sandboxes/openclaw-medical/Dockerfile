@@ -22,9 +22,7 @@
 #   openshell sandbox create --name medical \
 #     --from openclaw-medical \
 #     --forward 18789 \
-#     -- env CHAT_UI_URL=http://127.0.0.1:18789 \
-#            NVIDIA_INFERENCE_API_KEY=<key> \
-#            medical-start
+#     -- medical-start
 
 ARG BASE_IMAGE=ghcr.io/nvidia/openshell-community/sandboxes/openclaw-nvidia:latest
 FROM ${BASE_IMAGE}
@@ -72,6 +70,14 @@ COPY entrypoint.sh /usr/local/bin/medical-start
 RUN chmod +x /usr/local/bin/medical-start
 
 # ── Fix ownership ────────────────────────────────────────────────────
-RUN chown -R sandbox:sandbox /sandbox/data /sandbox/bridges /sandbox/download-models.py
+# pip installs run as root, so restore sandbox ownership on the venv.
+# Pre-create /sandbox/models for first-run model downloads.
+RUN mkdir -p /sandbox/models && \
+    chown -R sandbox:sandbox /sandbox/.venv /sandbox/data /sandbox/models \
+                             /sandbox/bridges /sandbox/download-models.py
+
+# ── Switch back to unprivileged user ───────────────────────────────
+# Required by OpenShell's defense-in-depth security model.
+USER sandbox
 
 ENTRYPOINT ["/bin/bash"]

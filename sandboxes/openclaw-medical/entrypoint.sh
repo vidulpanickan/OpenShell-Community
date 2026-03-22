@@ -8,9 +8,6 @@
 # 2. Delegates to openclaw-nvidia-start (inference.local + gateway + policy-proxy)
 # 3. Optionally starts messaging bridges based on environment variables
 #
-# Required env vars (inherited from openclaw-nvidia-start):
-#   CHAT_UI_URL  — URL where the chat UI will be accessed
-#
 # Optional env vars:
 #   TELEGRAM_BOT_TOKEN   — starts Telegram bridge if set
 #   DISCORD_BOT_TOKEN    — starts Discord bridge if set
@@ -18,6 +15,11 @@
 #   NVIDIA_INTEGRATE_API_KEY — passed through to openclaw-nvidia-start
 
 set -euo pipefail
+
+# ── Default CHAT_UI_URL ────────────────────────────────────────────────
+# OpenShell's SSH supervisor calls env_clear(), so env vars from the CLI
+# create command don't reach the sandbox process. Default to local access.
+export CHAT_UI_URL="${CHAT_UI_URL:-http://127.0.0.1:18789}"
 
 # ── Download models on first startup ──────────────────────────────────
 # Models are NOT baked into the image (keeps it small for K3s push).
