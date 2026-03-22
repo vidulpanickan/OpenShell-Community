@@ -46,7 +46,11 @@ fi
 #   - Starts the policy-proxy on port 18789
 #   - Outputs the chat UI URL
 echo "[medical-sandbox] Starting OpenClaw gateway and inference routing..."
+# Temporarily disable set -e — openclaw-nvidia-start has expected failures
+# (e.g., API key injection under Landlock) that should not abort the entrypoint.
+set +e
 source /usr/local/bin/openclaw-nvidia-start
+set -e
 
 # ── Conditionally start messaging bridges ────────────────────────────
 

@@ -41,3 +41,25 @@ pairing, sessions, etc.
 NemoClaw's upstream policy includes policies for `clawhub`, `openclaw_api`, and
 `openclaw_docs` which medical does not have. These enable OpenClaw plugin
 management and docs access from inside the sandbox.
+
+## 5. Gateway readiness check (Priority: Medium)
+
+Add a readiness loop (like ollama sandbox's health check) before the entrypoint
+completes. Currently there's a race condition where port forwarding may connect
+before the gateway and policy-proxy are ready.
+
+## 6. Bridge restart mechanism (Priority: Medium)
+
+Messaging bridges launched via `nohup &` have no restart mechanism. If they crash,
+they stay dead. Consider adding a simple watchdog or using a process supervisor.
+
+## 7. Implement /reset command in Telegram bridge (Priority: Low)
+
+The `/reset` command in `telegram-bridge.py` is a no-op — it tells the user
+"Session reset" but doesn't actually reset the OpenClaw session. Needs to call
+the gateway API to clear session state.
+
+## 8. Pin dependency versions in Dockerfile (Priority: Low)
+
+Currently pip packages (torch, transformers, etc.) are unpinned. Pin versions
+for reproducible builds: `torch==X.Y.Z`, `transformers==X.Y.Z`, etc.

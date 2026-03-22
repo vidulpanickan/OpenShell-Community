@@ -107,6 +107,7 @@ if chat_origin != local:
     origins.append(chat_origin)
 cfg['gateway']['controlUi'] = {
     'allowInsecureAuth': True,
+    'dangerouslyDisableDeviceAuth': True,
     'allowedOrigins': origins,
 }
 cfg['gateway']['trustedProxies'] = ['127.0.0.1', '::1']

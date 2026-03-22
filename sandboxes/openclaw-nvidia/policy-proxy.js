@@ -120,7 +120,7 @@ function pairingSnapshot() {
 
 function execOpenClaw(args) {
   return new Promise((resolve) => {
-    execFile("openclaw", args, { timeout: 5000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+    execFile("openclaw", args, { timeout: 15000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
       resolve({
         ok: !error,
         stdout: stdout || "",
@@ -135,6 +135,18 @@ function parseJsonBody(raw) {
   try {
     return JSON.parse(raw);
   } catch {
+    // openclaw CLI may prefix JSON with banner text or diagnostic messages.
+    // Try to extract JSON starting from the first '{' or '['.
+    const start = raw.indexOf('{');
+    const startArr = raw.indexOf('[');
+    const idx = start >= 0 && (startArr < 0 || start < startArr) ? start : startArr;
+    if (idx > 0) {
+      try {
+        return JSON.parse(raw.slice(idx));
+      } catch {
+        return null;
+      }
+    }
     return null;
   }
 }
