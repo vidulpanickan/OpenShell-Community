@@ -7,7 +7,7 @@
 #
 # Builds on openclaw-nvidia (which provides inference.local routing, policy-proxy,
 # and the NeMoClaw DevX UI extension) and adds:
-#   - Medical embedding model (baked in from HuggingFace)
+#   - Medical embedding model (downloaded on first startup from HuggingFace)
 #   - SQLite database with medical schema
 #   - Telegram and Discord messaging bridges (Python)
 #   - HuggingFace and PyPI network policies for runtime model/package management
@@ -48,12 +48,10 @@ RUN /sandbox/.venv/bin/pip install --no-cache-dir \
     python-telegram-bot \
     "discord.py>=2.0"
 
-# ── Download HuggingFace models at build time ────────────────────────
-# Models are baked into the image so they're available instantly on startup
-# without requiring runtime HuggingFace network access.
-COPY download-models.py /tmp/download-models.py
-RUN /sandbox/.venv/bin/python /tmp/download-models.py && \
-    rm /tmp/download-models.py
+# ── Model download script (runs at first startup, not build time) ────
+# Keeps the image small (~2.5GB instead of ~4.7GB) so it fits in
+# memory during the K3s image push on 8GB servers.
+COPY download-models.py /sandbox/download-models.py
 
 # ── Set up SQLite database ───────────────────────────────────────────
 COPY setup-database.sh /tmp/setup-database.sh
@@ -74,6 +72,6 @@ COPY entrypoint.sh /usr/local/bin/medical-start
 RUN chmod +x /usr/local/bin/medical-start
 
 # ── Fix ownership ────────────────────────────────────────────────────
-RUN chown -R sandbox:sandbox /sandbox/models /sandbox/data /sandbox/bridges
+RUN chown -R sandbox:sandbox /sandbox/data /sandbox/bridges /sandbox/download-models.py
 
 ENTRYPOINT ["/bin/bash"]

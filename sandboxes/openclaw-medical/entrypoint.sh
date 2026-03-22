@@ -4,7 +4,7 @@
 
 # openclaw-medical entrypoint
 #
-# 1. Verifies baked-in models and database exist
+# 1. Downloads models on first startup if not present
 # 2. Delegates to openclaw-nvidia-start (inference.local + gateway + policy-proxy)
 # 3. Optionally starts messaging bridges based on environment variables
 #
@@ -19,18 +19,15 @@
 
 set -euo pipefail
 
-# ── Verify models ─────────────────────────────────────────────────────
-echo "[medical-sandbox] Checking baked-in models..."
-for model_dir in /sandbox/models/medical-embedding; do
-    if [ -d "$model_dir" ]; then
-        echo "  Found: $model_dir"
-    else
-        echo "  WARNING: Model directory $model_dir not found"
-    fi
-done
-
-# Placeholder check for future models
-# for model_dir in /sandbox/models/entity-extraction; do ...
+# ── Download models on first startup ──────────────────────────────────
+# Models are NOT baked into the image (keeps it small for K3s push).
+# They download on first run and persist in /sandbox/models/.
+if [ ! -d /sandbox/models/medical-embedding ] || [ -z "$(ls -A /sandbox/models/medical-embedding 2>/dev/null)" ]; then
+    echo "[medical-sandbox] Downloading models (first run only, this takes a few minutes)..."
+    /sandbox/.venv/bin/python /sandbox/download-models.py
+else
+    echo "[medical-sandbox] Models already present, skipping download."
+fi
 
 # ── Verify database ──────────────────────────────────────────────────
 if [ -f /sandbox/data/medical.db ]; then
