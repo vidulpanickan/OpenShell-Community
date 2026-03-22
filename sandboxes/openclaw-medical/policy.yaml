@@ -159,6 +159,7 @@ network_policies:
     binaries:
       - { path: /usr/bin/curl }
       - { path: "/sandbox/.venv/bin/python*" }
+      - { path: "/sandbox/.uv/python/**" }
 
   # ──────────────────────────────────────────────────────────────────
   # NEW: Discord API, Gateway, and CDN (for Python messaging bridge)
@@ -193,6 +194,7 @@ network_policies:
     binaries:
       - { path: /usr/bin/curl }
       - { path: "/sandbox/.venv/bin/python*" }
+      - { path: "/sandbox/.uv/python/**" }
 
   # ──────────────────────────────────────────────────────────────────
   # NEW: Hugging Face Hub, LFS, and Inference API (runtime model downloads)
@@ -233,6 +235,7 @@ network_policies:
           - allow: { method: POST, path: "/**" }
     binaries:
       - { path: "/sandbox/.venv/bin/python*" }
+      - { path: "/sandbox/.uv/python/**" }
       - { path: /usr/local/bin/uv }
       - { path: /usr/bin/curl }
 
@@ -247,4 +250,5 @@ network_policies:
       - { host: files.pythonhosted.org, port: 443 }
     binaries:
       - { path: "/sandbox/.venv/bin/python*" }
+      - { path: "/sandbox/.uv/python/**" }
       - { path: /usr/local/bin/uv }

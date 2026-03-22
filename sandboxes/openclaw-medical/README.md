@@ -41,6 +41,16 @@ Verify it's running: `docker info`
 
 If `docker info` shows a permission error, log out and log back in, then try again.
 
+**Servers with 8GB RAM or less** — add swap space to prevent out-of-memory errors during setup:
+
+```bash
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
 ### Install OpenShell
 
 ```bash
