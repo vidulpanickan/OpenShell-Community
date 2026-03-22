@@ -124,16 +124,14 @@ openshell inference set --provider openai --model gpt-4o
 openshell sandbox create --name medical \
     --from ./ \
     --forward 18789 \
-    -- env CHAT_UI_URL=http://127.0.0.1:18789 \
-           NVIDIA_INFERENCE_API_KEY="${NVIDIA_API_KEY}" \
-           TELEGRAM_BOT_TOKEN="your-telegram-token" \
-           DISCORD_BOT_TOKEN="your-discord-token" \
-           medical-start
+    -- medical-start
 ```
 
-The Telegram and Discord tokens are optional — just remove the lines if you don't
-have them yet. The sandbox works fine without any messaging bridges. You can add
-them later without recreating the sandbox — just connect and start the bridge:
+`CHAT_UI_URL` defaults to `http://127.0.0.1:18789`. Inference credentials are
+configured via `openshell provider create` (step 2 above), not environment variables.
+
+The sandbox works fine without any messaging bridges. You can add Telegram or
+Discord bridges later without recreating the sandbox — just connect and start the bridge:
 
 ```bash
 openshell sandbox connect medical
@@ -161,7 +159,7 @@ The agent continues calling `inference.local`. The proxy handles routing to the 
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `CHAT_UI_URL` | Yes | URL where the chat UI is accessed |
+| `CHAT_UI_URL` | No | URL where the chat UI is accessed (default: `http://127.0.0.1:18789`) |
 | `NVIDIA_INFERENCE_API_KEY` | No | NVIDIA API key (injected into UI) |
 | `NVIDIA_INTEGRATE_API_KEY` | No | NVIDIA integrate API key (injected into UI) |
 | `TELEGRAM_BOT_TOKEN` | No | Telegram bot token — starts bridge if set |
