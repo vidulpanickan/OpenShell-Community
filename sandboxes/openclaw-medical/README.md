@@ -26,10 +26,20 @@ for the complete security architecture.
 
 Docker must be running before you start. If you don't have it:
 
-- **Mac**: Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start the app
-- **Linux**: `curl -fsSL https://get.docker.com | sh && sudo systemctl start docker`
+**Mac:** Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start the app.
+
+**Linux:**
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+newgrp docker
+```
 
 Verify it's running: `docker info`
+
+If `docker info` shows a permission error, log out and log back in, then try again.
 
 ### Install OpenShell
 
@@ -46,8 +56,15 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc   # or ~/.zshrc on Mac
 
 Verify it's installed: `openshell --version`
 
-On first use, OpenShell automatically creates a local gateway (K3s cluster in Docker).
-This takes a minute or two the first time.
+### Start the OpenShell gateway
+
+This is a one-time step that creates the local cluster (takes a minute or two):
+
+```bash
+openshell gateway start
+```
+
+Wait for it to finish. You can check it's running with `openshell gateway status`.
 
 ### Get an inference provider API key
 
