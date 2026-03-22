@@ -40,10 +40,11 @@ RUN apt-get update && \
 # Install into the existing /sandbox/.venv from the base image.
 # Using CPU-only torch to keep image size manageable.
 RUN /sandbox/.venv/bin/pip install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cpu
+RUN /sandbox/.venv/bin/pip install --no-cache-dir \
     transformers \
     sentence-transformers \
     huggingface-hub \
-    torch --index-url https://download.pytorch.org/whl/cpu \
     python-telegram-bot \
     "discord.py>=2.0"
 
