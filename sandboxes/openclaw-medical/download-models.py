@@ -1,10 +1,13 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Download HuggingFace models at Docker build time.
+"""Download HuggingFace models on first sandbox startup.
 
-Models are baked into the image at /sandbox/models/ so they are available
-immediately on sandbox startup without runtime HuggingFace network access.
+Models are downloaded into /sandbox/models/ on the first run. Subsequent
+starts skip the download since the files persist on the pod's filesystem.
+
+Uses max_workers=1 to avoid overwhelming the OpenShell proxy with parallel
+TLS connections.
 """
 
 import os
@@ -19,6 +22,7 @@ print("[download-models] Downloading vectorranger/embeddinggemma-300m-medical-30
 snapshot_download(
     "vectorranger/embeddinggemma-300m-medical-300k",
     local_dir=os.path.join(MODELS_DIR, "medical-embedding"),
+    max_workers=1,
 )
 print("[download-models] Medical embedding model ready.")
 
