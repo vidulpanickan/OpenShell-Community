@@ -87,6 +87,14 @@ openshell sandbox create --name medical --from ./ --forward 18789 -- medical-sta
 
 ---
 
+## Fix 7: Add Landlock protection for .openclaw directories (CRITICAL)
+
+**Problem:** NemoClaw's upstream policy explicitly protects `/sandbox/.openclaw` and `/sandbox/.openclaw-data` as `read_only`. Medical's policy was missing this, allowing a compromised agent to modify the auth token in `openclaw.json`.
+
+**Fix:** Added both paths to `filesystem_policy.read_only` in `policy.yaml`.
+
+---
+
 ## Security Alignment Summary
 
 | OpenShell Security Layer | Current (broken) | After fixes |
