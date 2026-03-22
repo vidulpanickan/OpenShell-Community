@@ -228,6 +228,24 @@ network_policies:
         rules:
           - allow: { method: GET, path: "/**" }
           - allow: { method: HEAD, path: "/**" }
+      # Xet Hub storage backend (HF's current LFS redirect target)
+      - host: cas-bridge.xethub.hf.co
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
+      # Catch-all for future hf.co CDN migrations
+      - host: "**.hf.co"
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: HEAD, path: "/**" }
       - host: api-inference.huggingface.co
         port: 443
         protocol: rest

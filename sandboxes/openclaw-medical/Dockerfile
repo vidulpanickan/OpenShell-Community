@@ -48,11 +48,6 @@ RUN /sandbox/.venv/bin/pip install --no-cache-dir \
     python-telegram-bot \
     "discord.py>=2.0"
 
-# Remove h2 (HTTP/2 library) — OpenShell's TLS-terminating proxy only
-# speaks HTTP/1.1. If h2 is present, httpx sends HTTP/2 frames that the
-# proxy can't parse, causing downloads to hang indefinitely.
-RUN /sandbox/.venv/bin/pip uninstall h2 -y 2>/dev/null || true
-
 # ── Model download script (runs at first startup, not build time) ────
 # Keeps the image small (~2.5GB instead of ~4.7GB) so it fits in
 # memory during the K3s image push on 8GB servers.
