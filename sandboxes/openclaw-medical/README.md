@@ -64,7 +64,11 @@ openshell sandbox create --name medical \
            medical-start
 ```
 
-### 3. (Optional) Start with messaging bridges
+### 3. (Optional) Connect Telegram or Discord
+
+The sandbox includes messaging bridges that let users chat with the agent from
+Telegram or Discord. Pass the bot token(s) as environment variables when creating
+the sandbox:
 
 ```bash
 openshell sandbox create --name medical \
@@ -72,10 +76,15 @@ openshell sandbox create --name medical \
     --forward 18789 \
     -- env CHAT_UI_URL=http://127.0.0.1:18789 \
            NVIDIA_INFERENCE_API_KEY="${NVIDIA_API_KEY}" \
-           TELEGRAM_BOT_TOKEN="your-bot-token" \
-           DISCORD_BOT_TOKEN="your-bot-token" \
+           TELEGRAM_BOT_TOKEN="your-telegram-token" \
+           DISCORD_BOT_TOKEN="your-discord-token" \
            medical-start
 ```
+
+Only include the tokens for the bridges you want. The bridges start automatically.
+
+For step-by-step instructions on creating the bots and getting tokens, see
+**[MESSAGING_SETUP.md](MESSAGING_SETUP.md)**.
 
 ## Switching Inference Providers
 
